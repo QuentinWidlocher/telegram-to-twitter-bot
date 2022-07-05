@@ -1,58 +1,42 @@
-import { TwitterApi } from "twitter-api-v2";
+import { TClientTokens, TwitterApi } from "twitter-api-v2";
 import * as readline from "readline";
 import { stdin as input, stdout as output } from "process";
 
-async function startLogin(client: TwitterApi) {
-  const authLink = await client.generateOAuth2AuthLink("https://example.com", {
-    scope: ["tweet.read", "tweet.write", "users.read"],
+const baseClient = new TwitterApi({
+  clientId: process.env.TWITTER_CLIENT_ID!,
+  clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+});
+
+export async function startLogin(from: { userId: string | number, chatId: string | number }, client: TwitterApi = baseClient) {
+  let url = new URL(process.env.REDIRECT_URL!)
+  url.searchParams.set("userId", String(from.userId));
+  url.searchParams.set("chatId", String(from.chatId));
+
+  const authLink = await client.generateOAuth2AuthLink(url.toString(), {
+    scope: ["tweet.read", "tweet.write", "users.read", "offline.access"],
   });
 
   return authLink;
 }
 
-async function getClientFromLoginCode(
+export async function getClientFromLoginCode(
   code: string,
   codeVerifier: string,
-  client: TwitterApi
+  from: { userId: string | number, chatId: string | number },
+  client: TwitterApi = baseClient
 ) {
-  const { client: authorizedClient } = await client.loginWithOAuth2({
+  let redirectUri = new URL(process.env.REDIRECT_URL!)
+  redirectUri.searchParams.set("userId", String(from.userId));
+  redirectUri.searchParams.set("chatId", String(from.chatId));
+
+  return client.loginWithOAuth2({
     code,
     codeVerifier,
-    redirectUri: "https://example.com",
-  });
-
-  return authorizedClient;
-}
-
-async function cliLogin(): Promise<TwitterApi> {
-  const baseClient = new TwitterApi({
-    clientId: process.env.TWITTER_CLIENT_ID!,
-    clientSecret: process.env.TWITTER_CLIENT_SECRET!,
-  });
-
-  let { url, codeVerifier } = await startLogin(baseClient);
-
-  return new Promise((resolve) => {
-    readline
-      .createInterface({ input, output })
-      .question(
-        `Visit ${url} and enter the code you received here:\t`,
-        async (code) => {
-          const client = await getClientFromLoginCode(
-            code,
-            codeVerifier,
-            baseClient
-          );
-          resolve(client);
-        }
-      );
+    redirectUri: redirectUri.toString(),
   });
 }
 
-export async function testTwitter() {
-  let client = await cliLogin();
-
-  client.v2.tweet({
-    text: "Hello, world!",
-  });
+export async function getClient(refreshToken: string) {
+  const { client } = await baseClient.refreshOAuth2Token(refreshToken);
+  return client;
 }

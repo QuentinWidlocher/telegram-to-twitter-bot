@@ -7,8 +7,8 @@
   "scripts": {
     "build": "pnpm preconstruct build",
     "deploy": "pnpm build && pnpm zip && pnpm aws-deploy",
-    "zip": "cp dist/telegram-to-twitter-bot.cjs.prod.js aws/index.js && zip -m -j aws/function.zip aws/index.js",
-    "aws-deploy": "aws lambda update-function-code --function-name DnDTelegramBot --zip-file fileb://aws/function.zip",
+    "zip": "cp dist/telegram-to-twitter-bot.cjs.prod.js aws/index.js && cd aws && zip -r ../function.zip *",
+    "aws-deploy": "aws lambda update-function-code --function-name TelegramToTwitter --zip-file fileb://function.zip",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
