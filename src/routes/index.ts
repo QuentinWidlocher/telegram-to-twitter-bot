@@ -3,10 +3,11 @@ import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
 import { update, retreive } from "../utils/storage";
 import { getClient, startLogin } from "../utils/twitter-api";
+import { createHandled } from "../utils/error-handling";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
 
   const bot = new TelegramBot(token);
@@ -131,4 +132,4 @@ Now, you can add this bot to you channel, and when you send posts, they will be 
     console.error(e);
     return { statusCode: 200, body: JSON.stringify(e) };
   }
-}
+})

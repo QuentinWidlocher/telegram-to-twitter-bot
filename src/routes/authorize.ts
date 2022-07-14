@@ -3,10 +3,11 @@ import { getClientFromLoginCode, startLogin } from "../utils/twitter-api";
 import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
+import { createHandled } from "../utils/error-handling";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
-export const handler: Handler = async (event) => {
+export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
 
   const bot = new TelegramBot(token);
@@ -71,4 +72,4 @@ Please try again.
   }
 
   return redirect;
-}
+})
