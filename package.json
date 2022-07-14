@@ -1,32 +1,21 @@
 {
   "name": "telegram-to-twitter-bot",
   "version": "1.0.0",
-  "description": "Telegram bot for french info and utils for DnD",
-  "main": "dist/telegram-to-twitter-bot.cjs.js",
-  "module": "dist/telegram-to-twitter-bot.esm.js",
-  "scripts": {
-    "build": "pnpm preconstruct build",
-    "deploy": "pnpm build && pnpm zip && pnpm aws-deploy",
-    "zip": "cp dist/telegram-to-twitter-bot.cjs.prod.js aws/index.js && cd aws && zip -r ../function.zip *",
-    "aws-deploy": "aws lambda update-function-code --function-name TelegramToTwitter --zip-file fileb://function.zip",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Telegram to Twitter bot",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/core": "^7.18.6",
-    "@babel/preset-env": "^7.18.2",
-    "@babel/preset-typescript": "^7.17.12",
-    "@preconstruct/cli": "^2.1.5",
+    "@netlify/functions": "^1.0.0",
     "@types/node": "^18.0.0",
     "@types/node-telegram-bot-api": "^0.57.1",
+    "pnpm": "^7.5.1",
     "typescript": "^4.7.4"
   },
   "dependencies": {
     "aws-sdk": "^2.1163.0",
-    "dotenv": "^16.0.1",
     "node-telegram-bot-api": "^0.58.0",
+    "tiny-invariant": "^1.2.0",
     "twitter-api-v2": "^1.12.3"
   }
 }
