@@ -28,22 +28,22 @@ export const handler: Handler = createHandled(async (event) => {
 
           invariant(message, "message is required");
 
-          let userData = await retreive(msg.from.id)
-
           if (!parseTweet(message).valid) {
             await bot.sendMessage(msg.chat.id, `This message won't fit in a tweet.`);
             resolve();
             return;
           }
 
+          let userData = await retreive(msg.from.id)
+
           invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
           invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
           invariant(userData.channelId, "userData.channelId is required");
 
-          let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
-
-          let tgMediaLinks = await Promise.all(msg.photo?.map(photo => bot.downloadFile(photo.file_id, './tmp')));
+          let tgMediaLinks = await Promise.all(msg.photo?.map(photo => bot.downloadFile(photo.file_id, '.')));
           console.log("tgMediaLinks", tgMediaLinks);
+
+          let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
 
           const mediaIds = await Promise.all(tgMediaLinks.map(link => twitterClient.v1.uploadMedia(link)));
 
