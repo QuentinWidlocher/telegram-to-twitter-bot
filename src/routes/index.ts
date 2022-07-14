@@ -19,6 +19,67 @@ export const handler: Handler = createHandled(async (event) => {
     const body = JSON.parse(event.body);
 
     await new Promise<void>((resolve, reject) => {
+      bot.on('photo', async (msg) => {
+        try {
+          invariant(msg.photo, "msg.photo is required");
+          invariant(msg.from?.id, "msg.from.id is required");
+
+          const message = msg.text ?? msg.caption;
+
+          invariant(message, "message is required");
+
+          let photoLinks = await Promise.all(msg.photo?.map(photo => bot.downloadFile(photo.file_id, './tmp')));
+          console.log("photoLinks", photoLinks);
+
+          let userData = await retreive(msg.from.id)
+
+          if (!parseTweet(message).valid) {
+            await bot.sendMessage(msg.chat.id, `This message won't fit in a tweet.`);
+            resolve();
+            return;
+          }
+
+          invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
+          invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
+          invariant(userData.channelId, "userData.channelId is required");
+
+          let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
+
+          let [tgRes, twRes] = await Promise.all([
+            bot.sendMessage(userData.channelId, message),
+            twitterClient.v2.tweet(message, {
+              media: {
+                media_ids: photoLinks,
+              }
+            }),
+            store(msg.from.id, {
+              ...userData,
+              credentials: {
+                ...userData.credentials,
+                accessToken,
+                refreshToken
+              }
+            })
+          ])
+
+          if (twRes.errors) {
+            console.error("twRes.errors", twRes.errors);
+            await bot.sendMessage(userData.channelId, "Error: " + twRes.errors.join('\n'));
+            resolve();
+            return;
+          }
+
+          console.log("twRes.data", twRes.data);
+
+          await bot.sendMessage(msg.from.id, "Message sent"),
+
+            resolve();
+        } catch (error) {
+          console.error("error", error);
+          reject(error);
+        }
+      })
+
       bot.onText(/^(?!\/)(.*)/m, async (msg) => {
         console.log("msg", msg);
         try {
