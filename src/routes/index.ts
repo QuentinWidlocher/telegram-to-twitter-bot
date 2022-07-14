@@ -63,6 +63,14 @@ export const handler: Handler = createHandled(async (event) => {
           console.log("tgMediaBuffers", tgMediaBuffers);
 
           let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
+          await store(msg.from.id, {
+            ...userData,
+            credentials: {
+              ...userData.credentials,
+              accessToken,
+              refreshToken
+            }
+          })
 
           const mediaIds = await Promise.all(tgMediaBuffers.map(file => twitterClient.v1.uploadMedia(file.buffer, { mimeType: 'image/jpeg' })));
 
@@ -73,14 +81,6 @@ export const handler: Handler = createHandled(async (event) => {
                 media_ids: mediaIds,
               }
             }),
-            store(msg.from.id, {
-              ...userData,
-              credentials: {
-                ...userData.credentials,
-                accessToken,
-                refreshToken
-              }
-            })
           ])
 
           if (twRes.errors) {
