@@ -1,5 +1,5 @@
 import { retreive, update } from "../utils/storage";
-import { getClient } from "../utils/twitter-api";
+import { generateOauthClient } from "../utils/twitter-api";
 import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
@@ -21,28 +21,33 @@ export const handler: Handler = createHandled(async (event) => {
 
   try {
 
-    const oauthToken = event.queryStringParameters?.oauth_token;
-    const oauthVerifier = event.queryStringParameters?.oauth_verifier;
+    const code = event.queryStringParameters?.code;
+    const state = event.queryStringParameters?.state;
     const userId = event.queryStringParameters?.userId;
     const chatId = event.queryStringParameters?.chatId;
 
-    invariant(oauthToken, "oauthToken is required");
-    invariant(oauthVerifier, "oauthVerifier is required");
+    invariant(code, "code is required");
+    invariant(state, "state is required");
     invariant(userId, "userId is required");
     invariant(chatId, "chatId is required");
 
     let { credentials } = await retreive(userId)
 
     try {
-      invariant(credentials?.authLink, "credentials.authLink is required");
+      invariant(credentials?.state, "credentials.state is required");
+      invariant(credentials.state == state, "credentials.state is required");
+      invariant(credentials?.codeVerifier, "credentials.state is required");
 
-      let authentication = await getClient(oauthToken, credentials.authLink.oauth_token_secret, oauthVerifier);
+      let authentication = await generateOauthClient(code, credentials.codeVerifier, {
+        userId,
+        chatId,
+      });
+
       await update(userId, {
         credentials: {
           ...credentials,
-          accessSecret: authentication.accessSecret,
           accessToken: authentication.accessToken,
-          oauthVerifier: oauthVerifier,
+          refreshToken: authentication.refreshToken,
         }
       })
 

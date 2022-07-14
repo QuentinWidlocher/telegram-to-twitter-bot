@@ -27,15 +27,20 @@ export const handler: Handler = createHandled(async (event) => {
           let userData = await retreive(msg.from.id)
 
           invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
-          invariant(userData?.credentials?.accessSecret, "userData.credentials.accessSecret is required");
-          invariant(userData?.credentials?.oauthVerifier, "userData.credentials.oauthVerifier is required");
+          invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
           invariant(userData.channelId, "userData.channelId is required");
 
-          let { client: twitterClient } = await getClient(userData.credentials.accessToken, userData.credentials.accessSecret, userData.credentials.oauthVerifier);
+          let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
 
           let [tgRes, twRes] = await Promise.all([
             bot.sendMessage(userData.channelId, msg.text),
             twitterClient.v2.tweet(msg.text),
+            update(msg.from.id, {
+              credentials: {
+                accessToken,
+                refreshToken
+              }
+            })
           ])
 
           if (twRes.errors) {
@@ -61,17 +66,16 @@ export const handler: Handler = createHandled(async (event) => {
           console.log("/start", msg);
           invariant(msg.from?.id, "msg.from.id is required");
 
-          let authLink = await startLogin({ userId: msg.from.id, chatId: msg.chat.id });
+          let oauthResult = await startLogin({ userId: msg.from.id, chatId: msg.chat.id });
 
-          console.debug('authLink', authLink)
+          console.debug('oauthResult', oauthResult)
 
           await update(msg.from.id, {
             credentials: {
-              authLink
+              state: oauthResult.state,
+              codeVerifier: oauthResult.codeVerifier,
             }
           })
-
-          console.log("updated db");
 
           await await bot.sendMessage(msg.chat.id, `
 Hey ! Welcome to this bot 👋
@@ -84,7 +88,7 @@ Click the link below to get started. You'll be redirected to this bot and asked 
     `, {
             reply_markup: {
               inline_keyboard: [
-                [{ text: "Connect this bot to Twitter", url: authLink.url }],
+                [{ text: "Connect this bot to Twitter", url: oauthResult.url }],
               ],
             },
           });
@@ -118,7 +122,7 @@ Call the command \`/link @<channel-name>\` where @channel-name is the name of th
 
           let { credentials } = await retreive(msg.from.id)
 
-          if (!credentials?.authLink?.oauth_token) {
+          if (!credentials?.codeVerifier) {
             await bot.sendMessage(msg.chat.id, `
 You need to connect your Twitter account first.
 Call the command \`/start\` to start the process.

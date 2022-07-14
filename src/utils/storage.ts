@@ -10,14 +10,10 @@ const db = new DB({
 
 export type UserData = {
   credentials?: {
-    authLink?: {
-      oauth_token: string;
-      oauth_token_secret: string;
-      url: string;
-    },
-    accessSecret?: string;
-    accessToken?: string;
-    oauthVerifier?: string;
+    state?: string,
+    codeVerifier?: string,
+    accessToken?: string,
+    refreshToken?: string,
   },
   channelId?: string
 };
