@@ -6,6 +6,7 @@ import { generateOauthClient, getClient, getClientFromUserData, startLogin } fro
 import { createHandled } from "../utils/error-handling";
 import { parseTweet } from 'twitter-text';
 import { Stream } from "stream";
+import { lookup } from 'mime-types'
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
@@ -48,27 +49,27 @@ export const handler: Handler = createHandled(async (event) => {
             return;
           }
 
-          let tgMediaFiles = await Promise.all(msg.photo?.map(photo => bot.getFile(photo.file_id)))
-          console.debug('tgMediaFiles', tgMediaFiles)
-          let tgMediaBuffers = await Promise.all(tgMediaFiles.map(async photo => ({
-            buffer: await streamToBuffer(bot.getFileStream(photo.file_id)),
-            originalName: photo.file_path,
-          })));
-          console.log("tgMediaBuffers", tgMediaBuffers);
+          let tgMediaFile = await bot.getFile(msg.photo[msg.photo.length - 1].file_id);
+          console.debug('tgMediaFile', tgMediaFile)
+          let tgMediaBuffer = await {
+            buffer: await streamToBuffer(bot.getFileStream(tgMediaFile.file_id)),
+            originalName: tgMediaFile.file_path,
+          }
+          console.log("tgMediaBuffer", tgMediaBuffer);
 
           let userData = await retreive(msg.from.id)
           invariant(userData.channelId, "userData.channelId is required");
           let twitterClient = await getClientFromUserData(userData, msg.from.id);
 
-          const mediaIds = await Promise.all(tgMediaBuffers.map(file => twitterClient.v1.uploadMedia(file.buffer, { mimeType: 'image/jpeg' })));
+          const mediaId = await twitterClient.v1.uploadMedia(tgMediaBuffer.buffer, { mimeType: lookup(tgMediaBuffer.originalName ?? 'jpg') || 'image/jpeg' });
 
-          console.debug('mediaIds', mediaIds)
+          console.debug('mediaId', mediaId)
 
           let [tgRes, twRes] = await Promise.all([
-            bot.sendPhoto(msg.chat.id, tgMediaBuffers[0].buffer, { caption: message }),
+            bot.sendPhoto(userData.channelId, tgMediaBuffer.buffer, { caption: message }),
             twitterClient.v2.tweet(message, {
               media: {
-                media_ids: mediaIds,
+                media_ids: [mediaId],
               }
             }),
           ])
