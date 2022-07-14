@@ -10,10 +10,11 @@ const db = new DB({
 
 export type UserData = {
   credentials?: {
-    state?: string,
-    codeVerifier?: string,
-    accessToken?: string,
-    refreshToken?: string,
+    oauthToken?: string;
+    oauthTokenSecret?: string;
+    accessToken?: string;
+    accessSecret?: string;
+    oauthVerifier?: string;
   },
   channelId?: string
 };

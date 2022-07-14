@@ -21,33 +21,30 @@ export const handler: Handler = createHandled(async (event) => {
 
   try {
 
-    const code = event.queryStringParameters?.code;
-    const state = event.queryStringParameters?.state;
+    const oauthToken = event.queryStringParameters?.oauth_token;
+    const oauthVerifier = event.queryStringParameters?.oauth_verifier;
     const userId = event.queryStringParameters?.userId;
     const chatId = event.queryStringParameters?.chatId;
 
-    invariant(code, "code is required");
-    invariant(state, "state is required");
+    invariant(oauthToken, "oauthToken is required");
+    invariant(oauthVerifier, "oauthVerifier is required");
     invariant(userId, "userId is required");
     invariant(chatId, "chatId is required");
 
     let { credentials } = await retreive(userId)
 
     try {
-      invariant(credentials?.state, "credentials.state is required");
-      invariant(credentials.state == state, "credentials.state is required");
-      invariant(credentials?.codeVerifier, "credentials.state is required");
+      invariant(credentials?.oauthToken, "credentials.oauthToken is required");
+      invariant(credentials?.oauthTokenSecret, "credentials.oauthTokenSecret is required");
 
-      let authentication = await generateOauthClient(code, credentials.codeVerifier, {
-        userId,
-        chatId,
-      });
+      let authentication = await generateOauthClient(oauthToken, credentials?.oauthTokenSecret, oauthVerifier);
 
       await update(userId, {
         credentials: {
           ...credentials,
           accessToken: authentication.accessToken,
-          refreshToken: authentication.refreshToken,
+          accessSecret: authentication.accessSecret,
+          oauthVerifier,
         }
       })
 

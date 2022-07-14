@@ -2,7 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
 import { update, retreive, store } from "../utils/storage";
-import { getClient, startLogin } from "../utils/twitter-api";
+import { generateOauthClient, getClient, getClientFromUserData, startLogin } from "../utils/twitter-api";
 import { createHandled } from "../utils/error-handling";
 import { parseTweet } from 'twitter-text';
 import { Stream } from "stream";
@@ -48,12 +48,6 @@ export const handler: Handler = createHandled(async (event) => {
             return;
           }
 
-          let userData = await retreive(msg.from.id)
-
-          invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
-          invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
-          invariant(userData.channelId, "userData.channelId is required");
-
           let tgMediaFiles = await Promise.all(msg.photo?.map(photo => bot.getFile(photo.file_id)))
           console.debug('tgMediaFiles', tgMediaFiles)
           let tgMediaBuffers = await Promise.all(tgMediaFiles.map(async photo => ({
@@ -62,20 +56,16 @@ export const handler: Handler = createHandled(async (event) => {
           })));
           console.log("tgMediaBuffers", tgMediaBuffers);
 
-          let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
-          await store(msg.from.id, {
-            ...userData,
-            credentials: {
-              ...userData.credentials,
-              accessToken,
-              refreshToken
-            }
-          })
+          let userData = await retreive(msg.from.id)
+          invariant(userData.channelId, "userData.channelId is required");
+          let twitterClient = await getClientFromUserData(userData, msg.from.id);
 
           const mediaIds = await Promise.all(tgMediaBuffers.map(file => twitterClient.v1.uploadMedia(file.buffer, { mimeType: 'image/jpeg' })));
 
+          console.debug('mediaIds', mediaIds)
+
           let [tgRes, twRes] = await Promise.all([
-            bot.sendMessage(userData.channelId, message),
+            bot.sendPhoto(msg.chat.id, tgMediaBuffers[0].buffer, { caption: message }),
             twitterClient.v2.tweet(message, {
               media: {
                 media_ids: mediaIds,
@@ -108,6 +98,7 @@ export const handler: Handler = createHandled(async (event) => {
           invariant(msg.from?.id, "msg.from.id is required");
 
           let userData = await retreive(msg.from.id)
+          invariant(userData.channelId, "userData.channelId is required");
 
           if (!parseTweet(msg.text).valid) {
             await bot.sendMessage(msg.chat.id, `This message won't fit in a tweet.`);
@@ -115,23 +106,11 @@ export const handler: Handler = createHandled(async (event) => {
             return;
           }
 
-          invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
-          invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
-          invariant(userData.channelId, "userData.channelId is required");
-
-          let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
+          let twitterClient = await getClientFromUserData(userData, msg.from.id);
 
           let [tgRes, twRes] = await Promise.all([
             bot.sendMessage(userData.channelId, msg.text),
             twitterClient.v2.tweet(msg.text),
-            store(msg.from.id, {
-              ...userData,
-              credentials: {
-                ...userData.credentials,
-                accessToken,
-                refreshToken
-              }
-            })
           ])
 
           if (twRes.errors) {
@@ -163,8 +142,8 @@ export const handler: Handler = createHandled(async (event) => {
 
           await update(msg.from.id, {
             credentials: {
-              state: oauthResult.state,
-              codeVerifier: oauthResult.codeVerifier,
+              oauthToken: oauthResult.oauth_token,
+              oauthTokenSecret: oauthResult.oauth_token_secret,
             }
           })
 
@@ -213,7 +192,7 @@ Call the command \`/link @<channel-name>\` where @channel-name is the name of th
 
           let { credentials } = await retreive(msg.from.id)
 
-          if (!credentials?.codeVerifier) {
+          if (!credentials?.oauthVerifier) {
             await bot.sendMessage(msg.chat.id, `
 You need to connect your Twitter account first.
 Call the command \`/start\` to start the process.
