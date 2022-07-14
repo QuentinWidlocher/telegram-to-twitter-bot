@@ -54,12 +54,17 @@ export const handler: Handler = createHandled(async (event) => {
           invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
           invariant(userData.channelId, "userData.channelId is required");
 
-          let tgMediaStreams = await Promise.all(msg.photo?.map(photo => streamToBuffer(bot.getFileStream(photo.file_id))));
-          console.log("tgMediaLinks", tgMediaStreams);
+          let tgMediaFiles = await Promise.all(msg.photo?.map(photo => bot.getFile(photo.file_id)))
+          console.debug('tgMediaFiles', tgMediaFiles)
+          let tgMediaBuffers = await Promise.all(tgMediaFiles.map(async photo => ({
+            buffer: await streamToBuffer(bot.getFileStream(photo.file_id)),
+            originalName: photo.file_path,
+          })));
+          console.log("tgMediaBuffers", tgMediaBuffers);
 
           let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
 
-          const mediaIds = await Promise.all(tgMediaStreams.map(link => twitterClient.v1.uploadMedia(link)));
+          const mediaIds = await Promise.all(tgMediaBuffers.map(file => twitterClient.v1.uploadMedia(file.buffer, { mimeType: 'image/jpeg' })));
 
           let [tgRes, twRes] = await Promise.all([
             bot.sendMessage(userData.channelId, message),
