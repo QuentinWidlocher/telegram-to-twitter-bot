@@ -14,7 +14,7 @@ export async function startLogin(from: { userId: string | number, chatId: string
 
   const authLink = await client.generateAuthLink(url.toString(), {
     authAccessType: 'write',
-    linkMode: 'authorize'
+    screenName: 'Telegram to Twitter Bot',
   });
 
   return authLink;
