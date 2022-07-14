@@ -4,6 +4,7 @@ import invariant from "tiny-invariant";
 import { update, retreive, store } from "../utils/storage";
 import { getClient, startLogin } from "../utils/twitter-api";
 import { createHandled } from "../utils/error-handling";
+import { parseTweet } from 'twitter-text';
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
@@ -25,6 +26,12 @@ export const handler: Handler = createHandled(async (event) => {
           invariant(msg.from?.id, "msg.from.id is required");
 
           let userData = await retreive(msg.from.id)
+
+          if (!parseTweet(msg.text).valid) {
+            await bot.sendMessage(msg.chat.id, `This message won't fit in a tweet.`);
+            resolve();
+            return;
+          }
 
           invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
           invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
