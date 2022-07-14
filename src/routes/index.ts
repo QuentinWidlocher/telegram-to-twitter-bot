@@ -28,9 +28,6 @@ export const handler: Handler = createHandled(async (event) => {
 
           invariant(message, "message is required");
 
-          let photoLinks = await Promise.all(msg.photo?.map(photo => bot.downloadFile(photo.file_id, './tmp')));
-          console.log("photoLinks", photoLinks);
-
           let userData = await retreive(msg.from.id)
 
           if (!parseTweet(message).valid) {
@@ -45,11 +42,16 @@ export const handler: Handler = createHandled(async (event) => {
 
           let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
 
+          let tgMediaLinks = await Promise.all(msg.photo?.map(photo => bot.downloadFile(photo.file_id, './tmp')));
+          console.log("tgMediaLinks", tgMediaLinks);
+
+          const mediaIds = await Promise.all(tgMediaLinks.map(link => twitterClient.v1.uploadMedia(link)));
+
           let [tgRes, twRes] = await Promise.all([
             bot.sendMessage(userData.channelId, message),
             twitterClient.v2.tweet(message, {
               media: {
-                media_ids: photoLinks,
+                media_ids: mediaIds,
               }
             }),
             store(msg.from.id, {
