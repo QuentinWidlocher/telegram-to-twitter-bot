@@ -142,6 +142,10 @@ Now, you can add this bot to you channel, and when you send posts, they will be 
         }
       })
 
+      setTimeout(() => {
+        reject("timeout");
+      }, 3000);
+
       bot.processUpdate(body);
     });
     return { statusCode: 200, body: JSON.stringify(event) };
