@@ -1,6 +1,4 @@
 import { app } from "../app";
-import { retreive, update } from "../utils/storage";
-import { getClientFromLoginCode, startLogin } from "../utils/twitter-api";
 import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
