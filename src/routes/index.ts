@@ -5,8 +5,22 @@ import { update, retreive, store } from "../utils/storage";
 import { getClient, startLogin } from "../utils/twitter-api";
 import { createHandled } from "../utils/error-handling";
 import { parseTweet } from 'twitter-text';
+import { Stream } from "stream";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
+
+async function streamToBuffer(stream: Stream): Promise<Buffer> {
+
+  return new Promise<Buffer>((resolve, reject) => {
+
+    const _buf = Array<any>();
+
+    stream.on("data", chunk => _buf.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(_buf)));
+    stream.on("error", err => reject(`error converting stream - ${err}`));
+
+  });
+}
 
 export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
@@ -40,12 +54,12 @@ export const handler: Handler = createHandled(async (event) => {
           invariant(userData?.credentials?.refreshToken, "userData.credentials.accessSecret is required");
           invariant(userData.channelId, "userData.channelId is required");
 
-          let tgMediaLinks = await Promise.all(msg.photo?.map(photo => bot.downloadFile(photo.file_id, '.')));
-          console.log("tgMediaLinks", tgMediaLinks);
+          let tgMediaStreams = await Promise.all(msg.photo?.map(photo => streamToBuffer(bot.getFileStream(photo.file_id))));
+          console.log("tgMediaLinks", tgMediaStreams);
 
           let { client: twitterClient, accessToken, refreshToken } = await getClient(userData.credentials.refreshToken);
 
-          const mediaIds = await Promise.all(tgMediaLinks.map(link => twitterClient.v1.uploadMedia(link)));
+          const mediaIds = await Promise.all(tgMediaStreams.map(link => twitterClient.v1.uploadMedia(link)));
 
           let [tgRes, twRes] = await Promise.all([
             bot.sendMessage(userData.channelId, message),
