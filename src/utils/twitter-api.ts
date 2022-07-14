@@ -32,23 +32,22 @@ export async function generateOauthClient(accessToken: string, accessSecret: str
   return client.login(oauthVerifier)
 }
 
+export async function generateClient(accessToken: string, accessSecret: string, oauthVerifier: string) {
+  return new TwitterApi({
+    appKey: process.env.TWITTER_APP_KEY!,
+    appSecret: process.env.TWITTER_APP_SECRET!,
+    accessToken,
+    accessSecret,
+  });
+}
+
 export async function getClientFromUserData(userData: UserData, userId: string | number) {
   invariant(userData?.credentials?.accessToken, "userData.credentials.accessToken is required");
   invariant(userData?.credentials?.accessSecret, "userData.credentials.accessSecret is required");
   invariant(userData?.credentials?.oauthVerifier, "userData.credentials.oauthVerifier is required");
   invariant(userData.channelId, "userData.channelId is required");
 
-  let { client: twitterClient, accessToken, accessSecret } = await generateOauthClient(userData.credentials.accessToken, userData.credentials.accessSecret, userData.credentials.oauthVerifier);
-  await store(userId, {
-    ...userData,
-    credentials: {
-      ...userData.credentials,
-      accessToken,
-      accessSecret
-    }
-  })
-
-  return twitterClient
+  return generateClient(userData.credentials.accessToken, userData.credentials.accessSecret, userData.credentials.oauthVerifier);
 }
 
 export async function getClient(userId: string | number) {
