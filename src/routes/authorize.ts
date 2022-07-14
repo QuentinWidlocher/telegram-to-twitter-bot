@@ -1,5 +1,5 @@
 import { retreive, update } from "../utils/storage";
-import { getClientFromLoginCode, startLogin } from "../utils/twitter-api";
+import { getClient } from "../utils/twitter-api";
 import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
@@ -12,11 +12,13 @@ export const handler: Handler = createHandled(async (event) => {
 
   const bot = new TelegramBot(token);
 
-  const code = event.queryStringParameters?.code;
+  const oauthToken = event.queryStringParameters?.oauth_token;
+  const oauthVerifier = event.queryStringParameters?.oauth_verifier;
   const userId = event.queryStringParameters?.userId;
   const chatId = event.queryStringParameters?.chatId;
 
-  invariant(code, "code is required");
+  invariant(oauthToken, "oauthToken is required");
+  invariant(oauthVerifier, "oauthVerifier is required");
   invariant(userId, "userId is required");
   invariant(chatId, "chatId is required");
 
@@ -27,35 +29,18 @@ export const handler: Handler = createHandled(async (event) => {
     },
   }
 
-  if (!code) {
-    let { url, codeVerifier } = await startLogin({ userId, chatId });
-
-    await update(userId, {
-      credentials: {
-        codeVerifier
-      }
-    })
-
-    await bot.sendMessage(chatId, `
-You need to provide a code.
-You can get it by clicking the link below.
-      `, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Connect this bot to Twitter", url }],
-        ],
-      },
-    });
-    return redirect
-  }
-
   let { credentials } = await retreive(userId)
 
+  invariant(credentials?.authLink, "credentials.authLink is required");
+
   try {
-    let authentication = await getClientFromLoginCode(code, credentials?.codeVerifier ?? '', { userId, chatId });
+    let authentication = await getClient(oauthToken, credentials.authLink.oauth_token_secret, oauthVerifier);
     await update(userId, {
       credentials: {
-        refreshToken: authentication.refreshToken,
+        ...credentials,
+        accessSecret: authentication.accessSecret,
+        accessToken: authentication.accessToken,
+        oauthVerifier: oauthVerifier,
       }
     })
 
