@@ -13,7 +13,7 @@ export async function startLogin(from: { userId: string | number, chatId: string
   url.searchParams.set("chatId", String(from.chatId));
 
   const authLink = await client.generateOAuth2AuthLink(url.toString(), {
-    scope: ['tweet.read', 'tweet.write', 'offline.access'],
+    scope: ['users.read', 'tweet.read', 'tweet.write', 'offline.access'],
   });
 
   return authLink;

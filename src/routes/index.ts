@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
-import { update, retreive } from "../utils/storage";
+import { update, retreive, store } from "../utils/storage";
 import { getClient, startLogin } from "../utils/twitter-api";
 import { createHandled } from "../utils/error-handling";
 
@@ -35,8 +35,10 @@ export const handler: Handler = createHandled(async (event) => {
           let [tgRes, twRes] = await Promise.all([
             bot.sendMessage(userData.channelId, msg.text),
             twitterClient.v2.tweet(msg.text),
-            update(msg.from.id, {
+            store(msg.from.id, {
+              ...userData,
               credentials: {
+                ...userData.credentials,
                 accessToken,
                 refreshToken
               }
