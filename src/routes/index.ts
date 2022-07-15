@@ -8,9 +8,9 @@ import { createHandled } from "../utils/error-handling";
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
 const tooLongMessage = `
-This took too long so the process was aborted... 
+❌ This took too long so the process was aborted... 
 
-If you want the developper to update his server, consider donating him a coffee or something to keep him awake while he works on this.
+This bot is running on a cheap server, if you want to help me improve it, consider donating something to help me cover the costs ❤️
 
 https://ko-fi.com/quentinwidlocher
 `;
@@ -24,6 +24,8 @@ export const handler: Handler = createHandled(async (event) => {
 
   try {
     const body = JSON.parse(event.body);
+
+    console.log("body", body);
 
     await new Promise<void>((resolve, reject) => {
       const actionNotFoundTimeout = setTimeout(() => {

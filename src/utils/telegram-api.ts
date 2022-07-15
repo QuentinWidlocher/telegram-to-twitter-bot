@@ -15,7 +15,7 @@ export async function sendMessage(
   }
 ) {
   if (text && !parseTweet(text).valid) {
-    await bot.sendMessage(currentChat, `This message won't fit in a tweet.`);
+    await bot.sendMessage(currentChat, `❌ This message won't fit in a tweet.`);
 
     return;
   }
@@ -58,7 +58,10 @@ export async function sendMessage(
 
   if (twRes.errors) {
     console.error("twRes.errors", twRes.errors);
-    await bot.sendMessage(telegramChannel, "Error: " + twRes.errors.join("\n"));
+    await bot.sendMessage(
+      telegramChannel,
+      "❌ Something went wrong while posting this to Twitter"
+    );
 
     return;
   }

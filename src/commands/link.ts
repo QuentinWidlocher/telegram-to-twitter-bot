@@ -3,15 +3,15 @@ import { Command } from "../commands";
 import { retreive, store } from "../utils/storage";
 
 const channelNameMissing = `
-You need to provide a channel name.
+❌ You need to provide a channel name.
 Call the command \`/link @<channel-name>\` where @channel-name is the name of the Telegram channel you want to link.
 `;
 const twitterAccountMissing = `
-You need to connect your Twitter account first.
+❌ You need to connect your Twitter account first.
 Call the command \`/start\` to start the process.
 `;
 const successMessage = `
-You've just linked your Twitter account to this bot.
+✅ You've just linked your Twitter account to this bot.
 Now, you can add this bot to your Telegram channel, and when you send posts here, they will be sent to your Telegram channel *and* Twitter account.
 
 *This bot won't ask for confirmation* though, so everything you'll post here (except for commands) will be sent.

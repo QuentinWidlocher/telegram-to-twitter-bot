@@ -57,7 +57,7 @@ export const handler: Handler = createHandled(async (event) => {
       await bot.sendMessage(
         chatId,
         `
-You've just connected your Twitter account to this bot.
+✅ You've just connected your Twitter account to this bot.
 Now, call the command \`/link @<channel-name>\` where \`@channel-name\` is the name of the Telegram channel you want to link.
       `,
         { parse_mode: "Markdown" }
@@ -67,7 +67,7 @@ Now, call the command \`/link @<channel-name>\` where \`@channel-name\` is the n
       await bot.sendMessage(
         chatId,
         `
-An error occured while connecting your Twitter account to this bot.
+❌ An error occured while connecting your Twitter account to this bot.
 Please try again.
       `
       );
