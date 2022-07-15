@@ -2,6 +2,7 @@ import invariant from "tiny-invariant";
 import { parseTweet } from "twitter-text";
 import { Command } from "../commands";
 import { retreive } from "../utils/storage";
+import { sendMessage } from "../utils/telegram-api";
 import { getClientFromUserData } from "../utils/twitter-api";
 
 export const getNotCommand: Command = (bot) => async (msg) => {
@@ -12,37 +13,13 @@ export const getNotCommand: Command = (bot) => async (msg) => {
   let userData = await retreive(msg.from.id);
   invariant(userData.channelId, "userData.channelId is required");
 
-  if (!parseTweet(msg.text).valid) {
-    await bot.sendMessage(msg.chat.id, `This message won't fit in a tweet.`);
-
-    return;
-  }
-
   let twitterClient = await getClientFromUserData(userData, msg.from.id);
 
-  let [tgRes, twRes] = await Promise.all([
-    bot.sendMessage(userData.channelId, msg.text),
-    twitterClient.v2.tweet(msg.text),
-  ]);
-
-  if (twRes.errors) {
-    console.error("twRes.errors", twRes.errors);
-    await bot.sendMessage(
-      userData.channelId,
-      "Error: " + twRes.errors.join("\n")
-    );
-
-    return;
-  }
-
-  await bot.sendMessage(
+  await sendMessage(
+    bot,
+    msg.text,
     msg.from.id,
-    `
-Message sent to Twitter and Telegram ! 🎉
-
-- *Twitter*: https://twitter.com/${msg.from.username}/status/${twRes.data.id}
-- *Telegram*: https://t.me/${userData.channelId}/${tgRes.message_id}
-`,
-    { parse_mode: "Markdown" }
+    userData.channelId,
+    twitterClient
   );
 };
