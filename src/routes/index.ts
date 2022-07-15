@@ -31,7 +31,7 @@ export const handler: Handler = createHandled(async (event) => {
       }, 5000);
 
       setTimeout(() => {
-        bot.sendMessage(body.chat.id, tooLongMessage);
+        bot.sendMessage(body.message.chat.id, tooLongMessage);
         reject();
       }, 9000);
 
