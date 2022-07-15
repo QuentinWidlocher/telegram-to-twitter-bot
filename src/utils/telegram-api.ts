@@ -21,6 +21,7 @@ export async function sendMessage(
   }
 
   let tgRes: TelegramBot.Message;
+  let notification: TelegramBot.Message;
   let twRes: TweetV2PostTweetResult;
 
   if (media != null) {
@@ -41,26 +42,28 @@ export async function sendMessage(
       }
     };
 
-    [tgRes, twRes] = await Promise.all([
+    [tgRes, twRes, notification] = await Promise.all([
       tgSend(media.mediaType),
       twitterClient.v2.tweet(text, {
         media: {
           media_ids: [media.mediaId],
         },
       }),
+      bot.sendMessage(currentChat, `📤 Sending message...`),
     ]);
   } else {
-    [tgRes, twRes] = await Promise.all([
+    [tgRes, twRes, notification] = await Promise.all([
       bot.sendMessage(telegramChannel, text),
       twitterClient.v2.tweet(text),
+      bot.sendMessage(currentChat, `📤 Sending message...`),
     ]);
   }
 
   if (twRes.errors) {
     console.error("twRes.errors", twRes.errors);
-    await bot.sendMessage(
-      telegramChannel,
-      "❌ Something went wrong while posting this to Twitter"
+    await bot.editMessageText(
+      "❌ Something went wrong while posting this to Twitter",
+      { message_id: notification.message_id, chat_id: currentChat }
     );
 
     return;
@@ -68,8 +71,7 @@ export async function sendMessage(
 
   const tgChannelName = telegramChannel.replace("@", "");
 
-  await bot.sendMessage(
-    currentChat,
+  await bot.editMessageText(
     `
 Message sent to Twitter and Telegram ! 🎉
 
@@ -79,6 +81,10 @@ https://twitter.com/${tgChannelName}/status/${twRes.data.id}
 *Telegram*
 https://t.me/${tgChannelName}/${tgRes.message_id}
 `.replace(/\_/g, "\\_"),
-    { parse_mode: "Markdown" }
+    {
+      message_id: notification.message_id,
+      chat_id: currentChat,
+      parse_mode: "Markdown",
+    }
   );
 }
