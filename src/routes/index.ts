@@ -43,11 +43,12 @@ export const handler: Handler = createHandled(async (event) => {
 
           try {
             await handler(...args);
-            clearTimeout(tooLongTimeout);
             resolve();
           } catch (error) {
             console.error(error);
             reject(error);
+          } finally {
+            clearTimeout(tooLongTimeout);
           }
         });
       }
@@ -63,12 +64,15 @@ export const handler: Handler = createHandled(async (event) => {
           } catch (error) {
             console.error(error);
             reject(error);
+          } finally {
+            clearTimeout(tooLongTimeout);
           }
         });
       }
 
       bot.processUpdate(body);
     });
+
     return { statusCode: 200, body: JSON.stringify(event) };
   } catch (e) {
     console.error(e);
