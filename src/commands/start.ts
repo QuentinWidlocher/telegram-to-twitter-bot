@@ -37,6 +37,6 @@ export const getStartCommand: Command = (bot) => async (msg) => {
         [{ text: "Connect this bot to Twitter", url: oauthResult.url }],
       ],
     },
-    parse_mode: "MarkdownV2",
+    parse_mode: "Markdown",
   });
 };

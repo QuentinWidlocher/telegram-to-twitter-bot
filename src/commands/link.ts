@@ -26,7 +26,7 @@ export const getLinkCommand: Command = (bot) => async (msg, match) => {
 
   if (!channelName) {
     await bot.sendMessage(msg.chat.id, channelNameMissing, {
-      parse_mode: "MarkdownV2",
+      parse_mode: "Markdown",
     });
     return;
   }
@@ -35,7 +35,7 @@ export const getLinkCommand: Command = (bot) => async (msg, match) => {
 
   if (!userData.credentials?.oauthVerifier) {
     await bot.sendMessage(msg.chat.id, twitterAccountMissing, {
-      parse_mode: "MarkdownV2",
+      parse_mode: "Markdown",
     });
     return;
   }
@@ -46,6 +46,6 @@ export const getLinkCommand: Command = (bot) => async (msg, match) => {
   });
 
   await bot.sendMessage(msg.chat.id, successMessage, {
-    parse_mode: "MarkdownV2",
+    parse_mode: "Markdown",
   });
 };

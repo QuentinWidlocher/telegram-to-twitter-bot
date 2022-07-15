@@ -60,7 +60,7 @@ export const handler: Handler = createHandled(async (event) => {
 You've just connected your Twitter account to this bot.
 Now, call the command \`/link @<channel-name>\` where \`@channel-name\` is the name of the Telegram channel you want to link.
       `,
-        { parse_mode: "MarkdownV2" }
+        { parse_mode: "Markdown" }
       );
     } catch (error) {
       console.error("error", error);
