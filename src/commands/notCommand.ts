@@ -35,10 +35,14 @@ export const getNotCommand: Command = (bot) => async (msg) => {
     return;
   }
 
-  console.log("twRes.data", twRes.data);
-
   await bot.sendMessage(
     msg.from.id,
-    "Message sent to Twitter and Telegram ! 🎉"
+    `
+Message sent to Twitter and Telegram ! 🎉
+
+- *Twitter*: https://twitter.com/${msg.from.username}/status/${twRes.data.id}
+- *Telegram*: https://t.me/${userData.channelId}/${tgRes.message_id}
+`,
+    { parse_mode: "Markdown" }
   );
 };
