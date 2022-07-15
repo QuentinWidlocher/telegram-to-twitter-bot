@@ -22,9 +22,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
   invariant(msg.photo, "msg.photo is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
-  const message = msg.text ?? msg.caption;
-
-  invariant(message, "message is required");
+  const message = msg.text ?? msg.caption ?? "";
 
   let userData = await retreive(msg.from.id);
   invariant(userData.channelId, "userData.channelId is required");
