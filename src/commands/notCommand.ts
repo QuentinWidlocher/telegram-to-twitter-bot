@@ -25,6 +25,7 @@ export const getNotCommand: Command = (bot) => async (msg) => {
     msg.text,
     msg.from.id,
     userData.channelId,
+    userData.twitterUsername,
     twitterClient,
     loadingMessage
   );

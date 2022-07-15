@@ -7,6 +7,7 @@ export async function sendMessage(
   text: string,
   currentChat: string | number,
   telegramChannel: string,
+  twitterName: string = telegramChannel,
   twitterClient: TwitterApi,
   loadingMessage: TelegramBot.Message,
   media?: {
@@ -68,22 +69,42 @@ export async function sendMessage(
   }
 
   const tgChannelName = telegramChannel.replace("@", "");
+  const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
+  const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
 
   await bot.editMessageText(
     `
 Message sent to Twitter and Telegram ! 🎉
 
 *Twitter*
-https://twitter.com/${tgChannelName}/status/${twRes.data.id}
+${twitterPostUrl}
 
 *Telegram*
-https://t.me/${tgChannelName}/${tgRes.message_id}
+${telegramPostUrl}
 `.replace(/\_/g, "\\_"),
     {
       message_id: loadingMessage.message_id,
       chat_id: currentChat,
       parse_mode: "Markdown",
       disable_web_page_preview: true,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "Share Tweet",
+              url: `https://t.me/share?url=${encodeURIComponent(
+                twitterPostUrl
+              )}`,
+            },
+            {
+              text: "Share post",
+              url: `https://t.me/share?url=${encodeURIComponent(
+                telegramPostUrl
+              )}`,
+            },
+          ],
+        ],
+      },
     }
   );
 }

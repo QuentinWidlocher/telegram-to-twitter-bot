@@ -15,8 +15,9 @@ export type UserData = {
     accessToken?: string;
     accessSecret?: string;
     oauthVerifier?: string;
-  },
-  channelId?: string
+  };
+  channelId?: string;
+  twitterUsername?: string;
 };
 
 export async function update(userId: string | number, data: Partial<UserData>) {
@@ -29,10 +30,8 @@ export async function update(userId: string | number, data: Partial<UserData>) {
     credentials: {
       ...existing.credentials,
       ...data.credentials,
-    }
+    },
   };
-
-  console.log("newData", newData);
 
   await store(userId, newData);
 }
@@ -50,19 +49,19 @@ export async function store(userId: string | number, data: Partial<UserData>) {
 }
 
 export async function retreive(userId: string | number): Promise<UserData> {
-  console.log("retreive", userId, db);
   return db
     .getItem({
       TableName: "telegram-to-twitter-bot",
       Key: { userId: { S: String(userId) } },
-    }).promise()
+    })
+    .promise()
     .then((data) => {
-      console.log("retreived", data);
       return JSON.parse(
         (data.$response.data as GetItemOutput | undefined)?.Item?.data?.S ??
-        "{}"
-      )
-    }).catch((e) => {
+          "{}"
+      );
+    })
+    .catch((e) => {
       console.error("retreive error", e);
       return {};
     });

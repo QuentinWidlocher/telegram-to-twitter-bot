@@ -38,6 +38,7 @@ export const getAnimationEvent: OnEvent<"animation"> = (bot) => async (msg) => {
     message,
     msg.from.id,
     userData.channelId,
+    userData.twitterUsername,
     twitterClient,
     loadingMessage,
     {

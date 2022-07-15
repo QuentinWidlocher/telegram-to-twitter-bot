@@ -1,4 +1,4 @@
-import { retreive, update } from "../utils/storage";
+import { retreive, store, update } from "../utils/storage";
 import { generateOauthClient } from "../utils/twitter-api";
 import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
@@ -30,28 +30,33 @@ export const handler: Handler = createHandled(async (event) => {
     invariant(userId, "userId is required");
     invariant(chatId, "chatId is required");
 
-    let { credentials } = await retreive(userId);
+    let userData = await retreive(userId);
 
     try {
-      invariant(credentials?.oauthToken, "credentials.oauthToken is required");
       invariant(
-        credentials?.oauthTokenSecret,
-        "credentials.oauthTokenSecret is required"
+        userData.credentials?.oauthToken,
+        "userData.credentials.oauthToken is required"
+      );
+      invariant(
+        userData.credentials?.oauthTokenSecret,
+        "userData.credentials.oauthTokenSecret is required"
       );
 
       let authentication = await generateOauthClient(
         oauthToken,
-        credentials?.oauthTokenSecret,
+        userData.credentials?.oauthTokenSecret,
         oauthVerifier
       );
 
-      await update(userId, {
+      await store(userId, {
+        ...userData,
         credentials: {
-          ...credentials,
+          ...userData.credentials,
           accessToken: authentication.accessToken,
           accessSecret: authentication.accessSecret,
           oauthVerifier,
         },
+        twitterUsername: authentication.screenName,
       });
 
       await bot.sendMessage(

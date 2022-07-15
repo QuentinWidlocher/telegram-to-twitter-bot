@@ -38,6 +38,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
     message,
     msg.from.id,
     userData.channelId,
+    userData.twitterUsername,
     twitterClient,
     loadingMessage,
     {
