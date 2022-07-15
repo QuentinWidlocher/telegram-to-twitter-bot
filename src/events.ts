@@ -4,6 +4,7 @@ import { getPhotoEvent } from "./events/photo";
 export function getEvents(bot: TelegramBot) {
   const events: Partial<TelegramBotOn> = {
     photo: getPhotoEvent(bot),
+    video: getPhotoEvent(bot),
   };
 
   return events;

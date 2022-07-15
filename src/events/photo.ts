@@ -1,8 +1,6 @@
-import { resolve } from "dns";
 import { lookup } from "mime-types";
 import { Stream } from "stream";
 import invariant from "tiny-invariant";
-import { parseTweet } from "twitter-text";
 import { OnEvent } from "../events";
 import { retreive } from "../utils/storage";
 import { sendMessage } from "../utils/telegram-api";
@@ -10,10 +8,10 @@ import { getClientFromUserData } from "../utils/twitter-api";
 
 async function streamToBuffer(stream: Stream): Promise<Buffer> {
   return new Promise<Buffer>((resolve, reject) => {
-    const _buf = Array<any>();
+    const buffer = Array<any>();
 
-    stream.on("data", (chunk) => _buf.push(chunk));
-    stream.on("end", () => resolve(Buffer.concat(_buf)));
+    stream.on("data", (chunk) => buffer.push(chunk));
+    stream.on("end", () => resolve(Buffer.concat(buffer)));
     stream.on("error", (err) => reject(`error converting stream - ${err}`));
   });
 }
