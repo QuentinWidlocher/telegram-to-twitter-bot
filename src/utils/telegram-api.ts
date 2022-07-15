@@ -92,7 +92,7 @@ export async function sendMessage(
         `❌ ${
           error.data.detail ??
           "Something went wrong while posting this to Twitter"
-        }`,
+        } (the Telegram post may already be sent)`,
         { message_id: loadingMessage.message_id, chat_id: currentChat }
       );
 

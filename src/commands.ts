@@ -1,7 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import { getLinkCommand } from "./commands/link";
 import { getNotCommand } from "./commands/notCommand";
-import { getStartCommand } from "./commands/start";
+import { getAuthCommand } from "./commands/auth";
+import { getHelpCommand } from "./commands/help";
 
 export type Command = (
   bot: TelegramBot
@@ -9,7 +10,8 @@ export type Command = (
 
 export function getCommands(bot: TelegramBot) {
   const commands: Parameters<TelegramBot["onText"]>[] = [
-    [/\/start$/m, getStartCommand(bot)],
+    [/\/(start|help)$/, getHelpCommand(bot)],
+    [/\/auth$/m, getAuthCommand(bot)],
     [/^\/link\s(.*)/m, getLinkCommand(bot)],
     [/^(?!\/)(.*)/m, getNotCommand(bot)],
   ];

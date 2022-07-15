@@ -4,17 +4,11 @@ import { update } from "../utils/storage";
 import { startLogin } from "../utils/twitter-api";
 
 const welcomeMessage = `
-Hey ! Welcome to this bot 👋
-
-You can use it to bind a Twitter account to a Telegram channel.
-Each time you send a post here, it will be sent to your Telegram channel *and* your Twitter account.
-
-To start, you'll need to connect your Twitter account.
-Click the link below to get started. You'll be redirected to this bot and asked to press start again.
+Click the link below to authorize this bot to post on your Twitter account.
 `;
 
-export const getStartCommand: Command = (bot) => async (msg) => {
-  console.log("/start", msg);
+export const getAuthCommand: Command = (bot) => async (msg) => {
+  console.log("/auth", msg);
   invariant(msg.from?.id, "msg.from.id is required");
 
   let oauthResult = await startLogin({
