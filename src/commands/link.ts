@@ -12,7 +12,9 @@ Call the command \`/start\` to start the process.
 `;
 const successMessage = `
 You've just linked your Twitter account to this bot.
-Now, you can add this bot to you channel, and when you send posts, they will be synced with your Twitter account.
+Now, you can add this bot to your Telegram channel, and when you send posts here, they will be sent to your Telegram channel *and* Twitter account.
+
+*This bot won't ask for confirmation* though, so everything you'll post here (except for commands) will be sent.
 `;
 
 export const getLinkCommand: Command = (bot) => async (msg, match) => {
@@ -23,14 +25,18 @@ export const getLinkCommand: Command = (bot) => async (msg, match) => {
   console.log("channelName", channelName);
 
   if (!channelName) {
-    await bot.sendMessage(msg.chat.id, channelNameMissing);
+    await bot.sendMessage(msg.chat.id, channelNameMissing, {
+      parse_mode: "MarkdownV2",
+    });
     return;
   }
 
   let userData = await retreive(msg.from.id);
 
   if (!userData.credentials?.oauthVerifier) {
-    await bot.sendMessage(msg.chat.id, twitterAccountMissing);
+    await bot.sendMessage(msg.chat.id, twitterAccountMissing, {
+      parse_mode: "MarkdownV2",
+    });
     return;
   }
 
@@ -39,5 +45,7 @@ export const getLinkCommand: Command = (bot) => async (msg, match) => {
     channelId: channelName,
   });
 
-  await bot.sendMessage(msg.chat.id, successMessage);
+  await bot.sendMessage(msg.chat.id, successMessage, {
+    parse_mode: "MarkdownV2",
+  });
 };

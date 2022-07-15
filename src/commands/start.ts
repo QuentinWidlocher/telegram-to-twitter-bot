@@ -7,7 +7,7 @@ const welcomeMessage = `
 Hey ! Welcome to this bot 👋
 
 You can use it to bind a Twitter account to a Telegram channel.
-Each time you send a post in the channel, it will be sent to your Twitter account.
+Each time you send a post here, it will be sent to your Telegram channel *and* your Twitter account.
 
 To start, you'll need to connect your Twitter account.
 Click the link below to get started. You'll be redirected to this bot and asked to press start again.
@@ -37,5 +37,6 @@ export const getStartCommand: Command = (bot) => async (msg) => {
         [{ text: "Connect this bot to Twitter", url: oauthResult.url }],
       ],
     },
+    parse_mode: "MarkdownV2",
   });
 };

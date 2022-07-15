@@ -10,9 +10,9 @@ const token = process.env.TELEGRAM_BOT_TOKEN!;
 const redirect = {
   statusCode: 302,
   headers: {
-    Location: 'tg://resolve?domain=TgToTwitterBot',
+    Location: "tg://resolve?domain=TgToTwitterBot",
   },
-}
+};
 
 export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
@@ -20,7 +20,6 @@ export const handler: Handler = createHandled(async (event) => {
   const bot = new TelegramBot(token);
 
   try {
-
     const oauthToken = event.queryStringParameters?.oauth_token;
     const oauthVerifier = event.queryStringParameters?.oauth_verifier;
     const userId = event.queryStringParameters?.userId;
@@ -31,13 +30,20 @@ export const handler: Handler = createHandled(async (event) => {
     invariant(userId, "userId is required");
     invariant(chatId, "chatId is required");
 
-    let { credentials } = await retreive(userId)
+    let { credentials } = await retreive(userId);
 
     try {
       invariant(credentials?.oauthToken, "credentials.oauthToken is required");
-      invariant(credentials?.oauthTokenSecret, "credentials.oauthTokenSecret is required");
+      invariant(
+        credentials?.oauthTokenSecret,
+        "credentials.oauthTokenSecret is required"
+      );
 
-      let authentication = await generateOauthClient(oauthToken, credentials?.oauthTokenSecret, oauthVerifier);
+      let authentication = await generateOauthClient(
+        oauthToken,
+        credentials?.oauthTokenSecret,
+        oauthVerifier
+      );
 
       await update(userId, {
         credentials: {
@@ -45,23 +51,30 @@ export const handler: Handler = createHandled(async (event) => {
           accessToken: authentication.accessToken,
           accessSecret: authentication.accessSecret,
           oauthVerifier,
-        }
-      })
+        },
+      });
 
-      await bot.sendMessage(chatId, `
+      await bot.sendMessage(
+        chatId,
+        `
 You've just connected your Twitter account to this bot.
-Now, call the command \`/link @<channel-name>\` where @channel-name is the name of the Telegram channel you want to link.
-      `);
+Now, call the command \`/link @<channel-name>\` where \`@channel-name\` is the name of the Telegram channel you want to link.
+      `,
+        { parse_mode: "MarkdownV2" }
+      );
     } catch (error) {
       console.error("error", error);
-      await bot.sendMessage(chatId, `
+      await bot.sendMessage(
+        chatId,
+        `
 An error occured while connecting your Twitter account to this bot.
 Please try again.
-      `);
+      `
+      );
     }
   } catch (error) {
     console.log("error", error);
+  } finally {
+    return redirect;
   }
-
-  return redirect;
-})
+});

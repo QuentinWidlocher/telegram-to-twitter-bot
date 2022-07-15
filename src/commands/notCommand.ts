@@ -37,5 +37,8 @@ export const getNotCommand: Command = (bot) => async (msg) => {
 
   console.log("twRes.data", twRes.data);
 
-  await bot.sendMessage(msg.from.id, "Message sent");
+  await bot.sendMessage(
+    msg.from.id,
+    "Message sent to Twitter and Telegram ! 🎉"
+  );
 };
