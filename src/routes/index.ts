@@ -18,7 +18,7 @@ https://ko-fi.com/quentinwidlocher
 const noActionMessage = `
 ❌ This is not a valid command, or a valid message.
 
-If you want to know what commands this bot support, type \`/help\`.
+If you want to know what commands this bot support, use /help.
 `
 
 export const handler: Handler = createHandled(async (event) => {
@@ -38,7 +38,7 @@ export const handler: Handler = createHandled(async (event) => {
         clearTimeout(tooLongTimeout);
         bot.sendMessage(body.message.chat.id, noActionMessage);
         reject("timeout");
-      }, 5000);
+      }, 1000);
 
       const tooLongTimeout = setTimeout(() => {
         bot.sendMessage(body.message.chat.id, tooLongMessage);
