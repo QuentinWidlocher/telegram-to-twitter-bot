@@ -7,6 +7,14 @@ import { createHandled } from "../utils/error-handling";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
+const tooLongMessage = `
+This took too long so the process was aborted... 
+
+If you want the developper to update his server, consider donating him a coffee or something to keep him awake while he works on this.
+
+https://ko-fi.com/quentinwidlocher
+`;
+
 export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
 
@@ -21,6 +29,11 @@ export const handler: Handler = createHandled(async (event) => {
       const actionNotFoundTimeout = setTimeout(() => {
         reject("timeout");
       }, 5000);
+
+      setTimeout(() => {
+        bot.sendMessage(body.chat.id, tooLongMessage);
+        reject();
+      }, 9000);
 
       for (const [pattern, handler] of getCommands(bot)) {
         bot.onText(pattern, async (...args) => {
