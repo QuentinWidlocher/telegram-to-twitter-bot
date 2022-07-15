@@ -5,6 +5,7 @@ export function getEvents(bot: TelegramBot) {
   const events: Partial<TelegramBotOn> = {
     photo: getPhotoEvent(bot),
     video: getPhotoEvent(bot),
+    animation: getPhotoEvent(bot),
   };
 
   return events;
