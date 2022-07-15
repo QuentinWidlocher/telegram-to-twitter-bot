@@ -53,8 +53,9 @@ export async function sendMessage(
 Message sent to Twitter and Telegram ! 🎉
 
 - *Twitter*: https://twitter.com/${telegramChannel}/status/${twRes.data.id}
+
 - *Telegram*: https://t.me/${telegramChannel}/${tgRes.message_id}
-`,
+`.replace(/\_/g, "\\_"),
     { parse_mode: "Markdown" }
   );
 }
