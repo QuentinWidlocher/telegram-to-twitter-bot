@@ -2,9 +2,8 @@
   "name": "telegram-to-twitter-bot",
   "version": "1.0.0",
   "description": "Telegram to Twitter bot",
-  "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@netlify/functions": "^1.0.0",
     "@types/mime-types": "^2.1.1",
