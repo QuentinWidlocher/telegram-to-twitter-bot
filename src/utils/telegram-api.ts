@@ -13,7 +13,7 @@ export async function sendMessage(
     mediaId: string;
   }
 ) {
-  if (!parseTweet(text).valid) {
+  if (text && !parseTweet(text).valid) {
     await bot.sendMessage(currentChat, `This message won't fit in a tweet.`);
 
     return;
