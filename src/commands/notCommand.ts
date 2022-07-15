@@ -10,6 +10,11 @@ export const getNotCommand: Command = (bot) => async (msg) => {
   invariant(msg.text, "msg.text is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
+  const loadingMessage = await bot.sendMessage(
+    msg.from.id,
+    `📤 Sending message...`
+  );
+
   let userData = await retreive(msg.from.id);
   invariant(userData.channelId, "userData.channelId is required");
 
@@ -20,6 +25,7 @@ export const getNotCommand: Command = (bot) => async (msg) => {
     msg.text,
     msg.from.id,
     userData.channelId,
-    twitterClient
+    twitterClient,
+    loadingMessage
   );
 };

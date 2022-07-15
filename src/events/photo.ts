@@ -10,6 +10,11 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
   invariant(msg.photo, "msg.photo is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
+  const loadingMessage = await bot.sendMessage(
+    msg.from.id,
+    `📤 Sending message...`
+  );
+
   const message = msg.text ?? msg.caption ?? "";
 
   let userData = await retreive(msg.from.id);
@@ -34,6 +39,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
     msg.from.id,
     userData.channelId,
     twitterClient,
+    loadingMessage,
     {
       buffer: tgMediaBuffer.buffer,
       mediaId,

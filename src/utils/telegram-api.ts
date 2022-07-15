@@ -8,6 +8,7 @@ export async function sendMessage(
   currentChat: string | number,
   telegramChannel: string,
   twitterClient: TwitterApi,
+  loadingMessage: TelegramBot.Message,
   media?: {
     buffer: Buffer;
     mediaId: string;
@@ -21,7 +22,6 @@ export async function sendMessage(
   }
 
   let tgRes: TelegramBot.Message;
-  let notification: TelegramBot.Message;
   let twRes: TweetV2PostTweetResult;
 
   if (media != null) {
@@ -42,20 +42,18 @@ export async function sendMessage(
       }
     };
 
-    [tgRes, twRes, notification] = await Promise.all([
+    [tgRes, twRes] = await Promise.all([
       tgSend(media.mediaType),
       twitterClient.v2.tweet(text, {
         media: {
           media_ids: [media.mediaId],
         },
       }),
-      bot.sendMessage(currentChat, `📤 Sending message...`),
     ]);
   } else {
-    [tgRes, twRes, notification] = await Promise.all([
+    [tgRes, twRes] = await Promise.all([
       bot.sendMessage(telegramChannel, text),
       twitterClient.v2.tweet(text),
-      bot.sendMessage(currentChat, `📤 Sending message...`),
     ]);
   }
 
@@ -63,7 +61,7 @@ export async function sendMessage(
     console.error("twRes.errors", twRes.errors);
     await bot.editMessageText(
       "❌ Something went wrong while posting this to Twitter",
-      { message_id: notification.message_id, chat_id: currentChat }
+      { message_id: loadingMessage.message_id, chat_id: currentChat }
     );
 
     return;
@@ -82,7 +80,7 @@ https://twitter.com/${tgChannelName}/status/${twRes.data.id}
 https://t.me/${tgChannelName}/${tgRes.message_id}
 `.replace(/\_/g, "\\_"),
     {
-      message_id: notification.message_id,
+      message_id: loadingMessage.message_id,
       chat_id: currentChat,
       parse_mode: "Markdown",
     }
