@@ -11,6 +11,7 @@ export async function sendMessage(
   media?: {
     buffer: Buffer;
     mediaId: string;
+    mediaType: "photo" | "animation" | "video";
   }
 ) {
   if (text && !parseTweet(text).valid) {
@@ -23,8 +24,14 @@ export async function sendMessage(
   let twRes: TweetV2PostTweetResult;
 
   if (media != null) {
+    const tgMethods = {
+      photo: bot.sendPhoto,
+      animation: bot.sendAnimation,
+      video: bot.sendVideo,
+    };
+
     [tgRes, twRes] = await Promise.all([
-      bot.sendPhoto(telegramChannel, media.buffer, {
+      tgMethods[media.mediaType](telegramChannel, media.buffer, {
         caption: text,
       }),
       twitterClient.v2.tweet(text, {

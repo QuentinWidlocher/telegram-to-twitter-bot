@@ -37,6 +37,7 @@ export const getVideoEvent: OnEvent<"video"> = (bot) => async (msg) => {
     {
       buffer: tgMediaBuffer.buffer,
       mediaId,
+      mediaType: "video",
     }
   );
 };

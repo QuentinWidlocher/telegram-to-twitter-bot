@@ -37,6 +37,7 @@ export const getAnimationEvent: OnEvent<"animation"> = (bot) => async (msg) => {
     {
       buffer: tgMediaBuffer.buffer,
       mediaId,
+      mediaType: "animation",
     }
   );
 };

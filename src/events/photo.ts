@@ -37,6 +37,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
     {
       buffer: tgMediaBuffer.buffer,
       mediaId,
+      mediaType: "photo",
     }
   );
 };
