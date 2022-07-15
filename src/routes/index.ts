@@ -29,6 +29,7 @@ export const handler: Handler = createHandled(async (event) => {
 
     await new Promise<void>((resolve, reject) => {
       const actionNotFoundTimeout = setTimeout(() => {
+        clearTimeout(tooLongTimeout);
         reject("timeout");
       }, 5000);
 

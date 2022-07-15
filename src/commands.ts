@@ -12,7 +12,7 @@ export function getCommands(bot: TelegramBot) {
   const commands: Parameters<TelegramBot["onText"]>[] = [
     [/\/(start|help)$/, getHelpCommand(bot)],
     [/\/auth$/m, getAuthCommand(bot)],
-    [/^\/link\s(.*)/m, getLinkCommand(bot)],
+    [/^\/link\s\@(\S*)/m, getLinkCommand(bot)],
     [/^(?!\/)(.*)/m, getNotCommand(bot)],
   ];
 

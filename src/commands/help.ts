@@ -18,11 +18,11 @@ If you want to change your Twitter account, you'll need to call \`/auth\` again.
 
 \`/link @<channel>\`
 Link your Twitter account to a Telegram channel.
-You'll need to call \`/auth\` first.
-If you want to change your Telegram channel, you'll need to call \`/link @<channel>\` again.
+You'll need to call /auth first.
+If you want to change your Telegram channel, you'll need to call /link again.
 Don't forget to also add this bot as an admin in your Telegram channel.
 
-\`help\`
+\`/help\`
 Show this help message.
 
 ➡️ If you just got here and unsure what to do, just call \`/auth\` to get started.
