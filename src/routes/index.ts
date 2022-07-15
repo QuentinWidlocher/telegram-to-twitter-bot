@@ -41,7 +41,7 @@ export const handler: Handler = createHandled(async (event) => {
       }, 1000);
 
       const tooLongTimeout = setTimeout(() => {
-        bot.sendMessage(body.message.chat.id, tooLongMessage);
+        bot.sendMessage(body.message.chat.id, tooLongMessage, { disable_web_page_preview: true, });
         reject();
       }, 9000);
 
