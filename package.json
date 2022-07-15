@@ -16,6 +16,7 @@
   "dependencies": {
     "aws-sdk": "^2.1163.0",
     "mime-types": "^2.1.35",
+    "node-fetch": "^3.2.8",
     "node-telegram-bot-api": "^0.58.0",
     "tiny-invariant": "^1.2.0",
     "twitter-api-v2": "^1.12.3",

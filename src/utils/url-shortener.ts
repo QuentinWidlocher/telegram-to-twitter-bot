@@ -1,3 +1,5 @@
+import fetch from "node-fetch";
+
 export async function shortenUrl(url: string) {
   const response = await fetch(
     `https://is.gd/create.php?format=simple&url=${url}`
