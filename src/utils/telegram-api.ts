@@ -1,6 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import { TweetV2PostTweetResult, TwitterApi } from "twitter-api-v2";
 import { parseTweet } from "twitter-text";
+import { replaceUrls } from "./url-shortener";
 
 export async function sendMessage(
   bot: TelegramBot,
@@ -13,7 +14,9 @@ export async function sendMessage(
     mediaId: string;
   }
 ) {
-  if (!parseTweet(text).valid) {
+  let textWithShortenedUrl = await replaceUrls(text);
+
+  if (!parseTweet(textWithShortenedUrl).valid) {
     await bot.sendMessage(currentChat, `This message won't fit in a tweet.`);
 
     return;
@@ -27,7 +30,7 @@ export async function sendMessage(
       bot.sendPhoto(telegramChannel, media.buffer, {
         caption: text,
       }),
-      twitterClient.v2.tweet(text, {
+      twitterClient.v2.tweet(textWithShortenedUrl, {
         media: {
           media_ids: [media.mediaId],
         },
@@ -36,7 +39,7 @@ export async function sendMessage(
   } else {
     [tgRes, twRes] = await Promise.all([
       bot.sendMessage(telegramChannel, text),
-      twitterClient.v2.tweet(text),
+      twitterClient.v2.tweet(textWithShortenedUrl),
     ]);
   }
 
