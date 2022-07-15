@@ -24,16 +24,25 @@ export async function sendMessage(
   let twRes: TweetV2PostTweetResult;
 
   if (media != null) {
-    const tgMethods = {
-      photo: bot.sendPhoto,
-      animation: bot.sendAnimation,
-      video: bot.sendVideo,
+    const tgSend = (type: typeof media.mediaType) => {
+      switch (type) {
+        case "photo":
+          return bot.sendPhoto(telegramChannel, media.buffer, {
+            caption: text,
+          });
+        case "animation":
+          return bot.sendAnimation(telegramChannel, media.buffer, {
+            caption: text,
+          });
+        case "video":
+          return bot.sendVideo(telegramChannel, media.buffer, {
+            caption: text,
+          });
+      }
     };
 
     [tgRes, twRes] = await Promise.all([
-      tgMethods[media.mediaType](telegramChannel, media.buffer, {
-        caption: text,
-      }),
+      tgSend(media.mediaType),
       twitterClient.v2.tweet(text, {
         media: {
           media_ids: [media.mediaId],
