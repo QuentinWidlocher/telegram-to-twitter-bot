@@ -6,8 +6,8 @@ import { retreive } from "../utils/storage";
 import { sendMessage } from "../utils/telegram-api";
 import { getClientFromUserData, streamToBuffer } from "../utils/twitter-api";
 
-export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
-  invariant(msg.photo, "msg.photo is required");
+export const getVideoEvent: OnEvent<"video"> = (bot) => async (msg) => {
+  invariant(msg.video, "msg.video is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
   const message = msg.text ?? msg.caption ?? "";
@@ -17,7 +17,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
 
   let twitterClient = await getClientFromUserData(userData, msg.from.id);
 
-  let tgMediaFile = await bot.getFile(msg.photo[msg.photo.length - 1].file_id);
+  let tgMediaFile = await bot.getFile(msg.video.file_id);
   console.debug("tgMediaFile", tgMediaFile);
   let tgMediaBuffer = await {
     buffer: await streamToBuffer(bot.getFileStream(tgMediaFile.file_id)),
@@ -25,7 +25,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
   };
 
   const mediaId = await twitterClient.v1.uploadMedia(tgMediaBuffer.buffer, {
-    mimeType: lookup(tgMediaBuffer.originalName ?? "jpg") || "image/jpeg",
+    mimeType: lookup(tgMediaBuffer.originalName ?? "mp4") || "video/mp4",
   });
 
   await sendMessage(

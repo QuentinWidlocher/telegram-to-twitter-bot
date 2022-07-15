@@ -1,11 +1,13 @@
 import TelegramBot from "node-telegram-bot-api";
+import { getAnimationEvent } from "./events/animation";
 import { getPhotoEvent } from "./events/photo";
+import { getVideoEvent } from "./events/video";
 
 export function getEvents(bot: TelegramBot) {
   const events: Partial<TelegramBotOn> = {
     photo: getPhotoEvent(bot),
-    video: getPhotoEvent(bot),
-    animation: getPhotoEvent(bot),
+    video: getVideoEvent(bot),
+    animation: getAnimationEvent(bot),
   };
 
   return events;
