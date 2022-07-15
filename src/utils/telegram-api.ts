@@ -1,5 +1,9 @@
 import TelegramBot from "node-telegram-bot-api";
-import { TweetV2PostTweetResult, TwitterApi } from "twitter-api-v2";
+import {
+  ApiResponseError,
+  TweetV2PostTweetResult,
+  TwitterApi,
+} from "twitter-api-v2";
 import { parseTweet } from "twitter-text";
 
 export async function sendMessage(
@@ -25,64 +29,44 @@ export async function sendMessage(
   let tgRes: TelegramBot.Message;
   let twRes: TweetV2PostTweetResult;
 
-  if (media != null) {
-    const tgSend = (type: typeof media.mediaType) => {
-      switch (type) {
-        case "photo":
-          return bot.sendPhoto(telegramChannel, media.buffer, {
-            caption: text,
-          });
-        case "animation":
-          return bot.sendAnimation(telegramChannel, media.buffer, {
-            caption: text,
-          });
-        case "video":
-          return bot.sendVideo(telegramChannel, media.buffer, {
-            caption: text,
-          });
-      }
-    };
+  try {
+    if (media != null) {
+      const tgSend = (type: typeof media.mediaType) => {
+        switch (type) {
+          case "photo":
+            return bot.sendPhoto(telegramChannel, media.buffer, {
+              caption: text,
+            });
+          case "animation":
+            return bot.sendAnimation(telegramChannel, media.buffer, {
+              caption: text,
+            });
+          case "video":
+            return bot.sendVideo(telegramChannel, media.buffer, {
+              caption: text,
+            });
+        }
+      };
 
-    [tgRes, twRes] = await Promise.all([
-      tgSend(media.mediaType),
-      twitterClient.v2.tweet(text, {
-        media: {
-          media_ids: [media.mediaId],
-        },
-      }),
-    ]);
-  } else {
-    [tgRes, twRes] = await Promise.all([
-      bot.sendMessage(telegramChannel, text),
-      twitterClient.v2.tweet(text),
-    ]);
-  }
+      [tgRes, twRes] = await Promise.all([
+        tgSend(media.mediaType),
+        twitterClient.v2.tweet(text, {
+          media: {
+            media_ids: [media.mediaId],
+          },
+        }),
+      ]);
+    } else {
+      [tgRes, twRes] = await Promise.all([
+        bot.sendMessage(telegramChannel, text),
+        twitterClient.v2.tweet(text),
+      ]);
+    }
+    const tgChannelName = telegramChannel.replace("@", "");
+    const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
+    const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
 
-  if (twRes.errors) {
-    console.error("twRes.errors", twRes.errors);
-    await bot.editMessageText(
-      "❌ Something went wrong while posting this to Twitter",
-      { message_id: loadingMessage.message_id, chat_id: currentChat }
-    );
-
-    return;
-  }
-
-  const tgChannelName = telegramChannel.replace("@", "");
-  const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
-  const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
-
-  await bot.editMessageText(
-    `
-Message sent to Twitter and Telegram ! 🎉
-
-*Twitter*
-${twitterPostUrl}
-
-*Telegram*
-${telegramPostUrl}
-`.replace(/\_/g, "\\_"),
-    {
+    await bot.editMessageText("Message sent to Twitter and Telegram ! 🎉", {
       message_id: loadingMessage.message_id,
       chat_id: currentChat,
       parse_mode: "Markdown",
@@ -91,13 +75,23 @@ ${telegramPostUrl}
         inline_keyboard: [
           [
             {
-              text: "Share Tweet",
+              text: "See Tweet",
+              url: twitterPostUrl,
+            },
+            {
+              text: "See post",
+              url: telegramPostUrl,
+            },
+          ],
+          [
+            {
+              text: "Share Tweet on Telegram",
               url: `https://t.me/share?url=${encodeURIComponent(
                 twitterPostUrl
               )}`,
             },
             {
-              text: "Share post",
+              text: "Share post on Telegram",
               url: `https://t.me/share?url=${encodeURIComponent(
                 telegramPostUrl
               )}`,
@@ -105,6 +99,18 @@ ${telegramPostUrl}
           ],
         ],
       },
+    });
+  } catch (error) {
+    if (error instanceof ApiResponseError) {
+      await bot.editMessageText(
+        `❌ ${
+          error.data.detail ??
+          "Something went wrong while posting this to Twitter"
+        }`,
+        { message_id: loadingMessage.message_id, chat_id: currentChat }
+      );
+
+      return;
     }
-  );
+  }
 }
