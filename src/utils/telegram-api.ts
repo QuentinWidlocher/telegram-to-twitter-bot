@@ -47,14 +47,18 @@ export async function sendMessage(
     return;
   }
 
+  const tgChannelName = telegramChannel.replace("@", "");
+
   await bot.sendMessage(
     currentChat,
     `
 Message sent to Twitter and Telegram ! 🎉
 
-- *Twitter*: https://twitter.com/${telegramChannel}/status/${twRes.data.id}
+*Twitter*
+https://twitter.com/${tgChannelName}/status/${twRes.data.id}
 
-- *Telegram*: https://t.me/${telegramChannel}/${tgRes.message_id}
+*Telegram*
+https://t.me/${tgChannelName}/${tgRes.message_id}
 `.replace(/\_/g, "\\_"),
     { parse_mode: "Markdown" }
   );
