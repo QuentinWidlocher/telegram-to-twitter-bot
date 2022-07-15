@@ -15,6 +15,12 @@ This bot is running on a cheap server, if you want to help me improve it, consid
 https://ko-fi.com/quentinwidlocher
 `;
 
+const noActionMessage = `
+❌ This is not a valid command, or a valid message.
+
+If you want to know what commands this bot support, type \`/help\`.
+`
+
 export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
 
@@ -30,6 +36,7 @@ export const handler: Handler = createHandled(async (event) => {
     await new Promise<void>((resolve, reject) => {
       const actionNotFoundTimeout = setTimeout(() => {
         clearTimeout(tooLongTimeout);
+        bot.sendMessage(body.message.chat.id, noActionMessage);
         reject("timeout");
       }, 5000);
 
@@ -77,6 +84,6 @@ export const handler: Handler = createHandled(async (event) => {
     return { statusCode: 200, body: JSON.stringify(event) };
   } catch (e) {
     console.error(e);
-    return { statusCode: 200, body: JSON.stringify(e) };
+    return { statusCode: 500, body: JSON.stringify(e) };
   }
 });
