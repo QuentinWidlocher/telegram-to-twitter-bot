@@ -83,20 +83,6 @@ export async function sendMessage(
               url: telegramPostUrl,
             },
           ],
-          [
-            {
-              text: "Share Tweet on Telegram",
-              url: `https://t.me/share?url=${encodeURIComponent(
-                twitterPostUrl
-              )}`,
-            },
-            {
-              text: "Share post on Telegram",
-              url: `https://t.me/share?url=${encodeURIComponent(
-                telegramPostUrl
-              )}`,
-            },
-          ],
         ],
       },
     });
