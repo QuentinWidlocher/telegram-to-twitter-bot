@@ -18,8 +18,14 @@ export const handler: Handler = createHandled(async (event) => {
     const body = JSON.parse(event.body);
 
     await new Promise<void>((resolve, reject) => {
+      const actionNotFoundTimeout = setTimeout(() => {
+        reject("timeout");
+      }, 5000);
+
       for (const [pattern, handler] of getCommands(bot)) {
         bot.onText(pattern, async (...args) => {
+          clearTimeout(actionNotFoundTimeout);
+
           try {
             await handler(...args);
             resolve();
@@ -32,6 +38,8 @@ export const handler: Handler = createHandled(async (event) => {
 
       for (const [event, handler] of Object.entries(getEvents(bot))) {
         bot.on(event as any, async (...args) => {
+          clearTimeout(actionNotFoundTimeout);
+
           try {
             await (handler as any)(...args);
             resolve();
@@ -43,10 +51,6 @@ export const handler: Handler = createHandled(async (event) => {
       }
 
       bot.processUpdate(body);
-
-      setTimeout(() => {
-        reject("timeout");
-      }, 3000);
     });
     return { statusCode: 200, body: JSON.stringify(event) };
   } catch (e) {
