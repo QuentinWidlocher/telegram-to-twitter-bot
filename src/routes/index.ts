@@ -32,7 +32,7 @@ export const handler: Handler = createHandled(async (event) => {
         reject("timeout");
       }, 5000);
 
-      setTimeout(() => {
+      const tooLongTimeout = setTimeout(() => {
         bot.sendMessage(body.message.chat.id, tooLongMessage);
         reject();
       }, 9000);
@@ -43,6 +43,7 @@ export const handler: Handler = createHandled(async (event) => {
 
           try {
             await handler(...args);
+            clearTimeout(tooLongTimeout);
             resolve();
           } catch (error) {
             console.error(error);
@@ -57,6 +58,7 @@ export const handler: Handler = createHandled(async (event) => {
 
           try {
             await (handler as any)(...args);
+            clearTimeout(tooLongTimeout);
             resolve();
           } catch (error) {
             console.error(error);

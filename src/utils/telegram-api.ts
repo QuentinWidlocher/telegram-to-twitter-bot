@@ -83,6 +83,7 @@ https://t.me/${tgChannelName}/${tgRes.message_id}
       message_id: loadingMessage.message_id,
       chat_id: currentChat,
       parse_mode: "Markdown",
+      disable_web_page_preview: true,
     }
   );
 }
