@@ -19,7 +19,7 @@ const noActionMessage = `
 ❌ This is not a valid command, or a valid message.
 
 If you want to know what commands this bot support, use /help.
-`
+`;
 
 export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
@@ -33,20 +33,27 @@ export const handler: Handler = createHandled(async (event) => {
 
     console.log("body", body);
 
+    invariant(body.message, "body.message is required");
+
     await new Promise<void>((resolve, reject) => {
       const actionNotFoundTimeout = setTimeout(() => {
         clearTimeout(tooLongTimeout);
+        console.error("action not found");
         bot.sendMessage(body.message.chat.id, noActionMessage);
         reject("timeout");
       }, 1000);
 
       const tooLongTimeout = setTimeout(() => {
-        bot.sendMessage(body.message.chat.id, tooLongMessage, { disable_web_page_preview: true, });
+        console.log("too long");
+        bot.sendMessage(body.message.chat.id, tooLongMessage, {
+          disable_web_page_preview: true,
+        });
         reject();
       }, 9000);
 
       for (const [pattern, handler] of getCommands(bot)) {
         bot.onText(pattern, async (...args) => {
+          console.log("onText", pattern, args);
           clearTimeout(actionNotFoundTimeout);
 
           try {
@@ -63,6 +70,7 @@ export const handler: Handler = createHandled(async (event) => {
 
       for (const [event, handler] of Object.entries(getEvents(bot))) {
         bot.on(event as any, async (...args) => {
+          console.log("on", event, args);
           clearTimeout(actionNotFoundTimeout);
 
           try {

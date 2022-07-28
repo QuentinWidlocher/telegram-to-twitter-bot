@@ -20,7 +20,7 @@ export const getPhotoEvent: OnEvent<"photo"> = (bot) => async (msg) => {
   let userData = await retreive(msg.from.id);
   invariant(userData.channelId, "userData.channelId is required");
 
-  let twitterClient = await getClientFromUserData(userData, msg.from.id);
+  let twitterClient = await getClientFromUserData(userData);
 
   let tgMediaFile = await bot.getFile(msg.photo[msg.photo.length - 1].file_id);
   console.debug("tgMediaFile", tgMediaFile);

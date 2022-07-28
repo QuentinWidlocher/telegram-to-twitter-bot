@@ -6,7 +6,7 @@ import { sendMessage } from "../utils/telegram-api";
 import { getClientFromUserData } from "../utils/twitter-api";
 
 export const getNotCommand: Command = (bot) => async (msg) => {
-  console.log("msg", msg);
+  console.log("on message", msg);
   invariant(msg.text, "msg.text is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
@@ -18,7 +18,7 @@ export const getNotCommand: Command = (bot) => async (msg) => {
   let userData = await retreive(msg.from.id);
   invariant(userData.channelId, "userData.channelId is required");
 
-  let twitterClient = await getClientFromUserData(userData, msg.from.id);
+  let twitterClient = await getClientFromUserData(userData);
 
   await sendMessage(
     bot,

@@ -1,8 +1,7 @@
-import TelegramBot from "node-telegram-bot-api";
 import { Stream } from "stream";
 import invariant from "tiny-invariant";
 import { TwitterApi } from "twitter-api-v2";
-import { retreive, store, UserData } from "./storage";
+import { retreive, UserData } from "./storage";
 
 const baseClient = new TwitterApi({
   // clientId: process.env.TWITTER_CLIENT_ID!,
@@ -43,9 +42,9 @@ export async function generateOauthClient(
 
 export async function generateClient(
   accessToken: string,
-  accessSecret: string,
-  oauthVerifier: string
+  accessSecret: string
 ) {
+  console.log("generateClient()");
   return new TwitterApi({
     appKey: process.env.TWITTER_APP_KEY!,
     appSecret: process.env.TWITTER_APP_SECRET!,
@@ -54,10 +53,7 @@ export async function generateClient(
   });
 }
 
-export async function getClientFromUserData(
-  userData: UserData,
-  userId: string | number
-) {
+export async function getClientFromUserData(userData: UserData) {
   invariant(
     userData?.credentials?.accessToken,
     "userData.credentials.accessToken is required"
@@ -66,22 +62,19 @@ export async function getClientFromUserData(
     userData?.credentials?.accessSecret,
     "userData.credentials.accessSecret is required"
   );
-  invariant(
-    userData?.credentials?.oauthVerifier,
-    "userData.credentials.oauthVerifier is required"
-  );
   invariant(userData.channelId, "userData.channelId is required");
+
+  console.log("getClientFromUserData", userData);
 
   return generateClient(
     userData.credentials.accessToken,
-    userData.credentials.accessSecret,
-    userData.credentials.oauthVerifier
+    userData.credentials.accessSecret
   );
 }
 
 export async function getClient(userId: string | number) {
   let userData = await retreive(userId);
-  return getClientFromUserData(userData, userId);
+  return getClientFromUserData(userData);
 }
 
 export async function streamToBuffer(stream: Stream): Promise<Buffer> {

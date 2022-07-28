@@ -31,6 +31,7 @@ export async function sendMessage(
 
   try {
     if (media != null) {
+      console.log("media", media);
       const tgSend = (type: typeof media.mediaType) => {
         switch (type) {
           case "photo":
@@ -57,11 +58,16 @@ export async function sendMessage(
         }),
       ]);
     } else {
+      console.log("no media");
       [tgRes, twRes] = await Promise.all([
         bot.sendMessage(telegramChannel, text),
         twitterClient.v2.tweet(text),
       ]);
+
+      console.log("tgRes", tgRes);
+      console.log("twRes", twRes);
     }
+
     const tgChannelName = telegramChannel.replace("@", "");
     const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
     const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
@@ -97,6 +103,8 @@ export async function sendMessage(
       );
 
       return;
+    } else {
+      throw error;
     }
   }
 }
