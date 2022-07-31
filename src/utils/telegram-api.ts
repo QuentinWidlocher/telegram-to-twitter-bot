@@ -28,6 +28,7 @@ export async function sendMessage(
 
   let tgRes: TelegramBot.Message;
   let twRes: TweetV2PostTweetResult;
+  const tgChannelName = telegramChannel.replace("@", "");
 
   try {
     if (media != null) {
@@ -35,15 +36,15 @@ export async function sendMessage(
       const tgSend = (type: typeof media.mediaType) => {
         switch (type) {
           case "photo":
-            return bot.sendPhoto(telegramChannel, media.buffer, {
+            return bot.sendPhoto(`@${tgChannelName}`, media.buffer, {
               caption: text,
             });
           case "animation":
-            return bot.sendAnimation(telegramChannel, media.buffer, {
+            return bot.sendAnimation(`@${tgChannelName}`, media.buffer, {
               caption: text,
             });
           case "video":
-            return bot.sendVideo(telegramChannel, media.buffer, {
+            return bot.sendVideo(`@${tgChannelName}`, media.buffer, {
               caption: text,
             });
         }
@@ -60,7 +61,7 @@ export async function sendMessage(
     } else {
       console.log("no media");
       [tgRes, twRes] = await Promise.all([
-        bot.sendMessage(telegramChannel, text),
+        bot.sendMessage(`@${tgChannelName}`, text),
         twitterClient.v2.tweet(text),
       ]);
 
@@ -68,7 +69,6 @@ export async function sendMessage(
       console.log("twRes", twRes);
     }
 
-    const tgChannelName = telegramChannel.replace("@", "");
     const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
     const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
 
@@ -95,15 +95,18 @@ export async function sendMessage(
   } catch (error) {
     if (error instanceof ApiResponseError) {
       await bot.editMessageText(
-        `❌ ${
-          error.data.detail ??
-          "Something went wrong while posting this to Twitter"
+        `❌ ${error.data.detail ??
+        "Something went wrong while posting this to Twitter"
         } (the Telegram post may already be sent)`,
         { message_id: loadingMessage.message_id, chat_id: currentChat }
       );
 
       return;
     } else {
+      await bot.editMessageText(
+        `❌ Something went wrong while posting. Check you configuration and try again.`,
+        { message_id: loadingMessage.message_id, chat_id: currentChat }
+      );
       throw error;
     }
   }

@@ -16,7 +16,17 @@ export const getNotCommand: Command = (bot) => async (msg) => {
   );
 
   let userData = await retreive(msg.from.id);
-  invariant(userData.channelId, "userData.channelId is required");
+  try {
+    invariant(userData.channelId, "userData.channelId is required");
+  } catch (e) {
+    await bot.editMessageText(
+      `❌ You need to link your Telegram channel first. Call the command \`/link\` <channel>`,
+      {
+        parse_mode: "Markdown",
+      }
+    );
+    throw e;
+  }
 
   let twitterClient = await getClientFromUserData(userData);
 
