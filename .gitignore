@@ -2,3 +2,4 @@
 node_modules
 dist
 aws
+.DS_Store
