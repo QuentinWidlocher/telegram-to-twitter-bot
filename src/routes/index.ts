@@ -45,17 +45,7 @@ export const handler: Handler = createHandled(async (event) => {
       // This will make the bot wait 1 second for multiple events to be triggered (sending a medias as a group)
       let groupActionTimeout = groupMedia.length > 0 ? setTimeout(async () => {
 
-        try {
-          await sendMultipleMediaObj(groupMedia.map(media => media.data))
-
-          for (const mediaRequest of groupMedia) {
-            mediaRequest.resolve()
-          }
-        } catch {
-          for (const mediaRequest of groupMedia) {
-            mediaRequest.reject()
-          }
-        }
+        await sendMultipleMediaObj(groupMedia.map(media => media.data))
 
         groupMedia = []
       }, 8000) : undefined;
