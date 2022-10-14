@@ -36,7 +36,7 @@ export const handler: Handler = createHandled(async (event) => {
 
     // console.log("body", body);
 
-    console.log("groupMedia", groupMedia.length)
+    console.log("groupMedia", groupMedia.length, groupMedia.map((m) => m.data.media.telegramMediaFile.file_id))
 
     invariant(body.message, "body.message is required");
 
@@ -110,11 +110,17 @@ export const handler: Handler = createHandled(async (event) => {
           try {
             // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
             if (message?.media_group_id) {
-              console.log('this is a media group')
+              console.log('this is a media group, we add', message.photo?.[message.photo.length - 1].file_id, 'to the group')
               let data: EventData = await (handler)(message);
 
-              // We add the data to the groupMedia array
-              groupMedia.push({ data, resolve, reject })
+              // We add the data to the groupMedia array if it doesn't exist
+              if (groupMedia.every(media => media.data.media.telegramMediaFile.file_id !== data.media.telegramMediaFile.file_id)) {
+                groupMedia.push({
+                  data,
+                  resolve,
+                  reject
+                })
+              }
             } else {
               clearTimeout(groupActionTimeout);
               let data: EventData = await (handler)(message);
