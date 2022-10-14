@@ -63,8 +63,6 @@ export async function getClientFromUserData(userData: UserData) {
   );
   invariant(userData.channelId, "userData.channelId is required");
 
-  console.log("getClientFromUserData", userData);
-
   return generateClient(
     userData.credentials.accessToken,
     userData.credentials.accessSecret

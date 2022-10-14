@@ -34,7 +34,9 @@ export const handler: Handler = createHandled(async (event) => {
   try {
     const body = JSON.parse(event.body);
 
-    console.log("body", body);
+    // console.log("body", body);
+
+    console.log("groupMedia", groupMedia.length)
 
     invariant(body.message, "body.message is required");
 
