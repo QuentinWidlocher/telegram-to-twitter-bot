@@ -108,9 +108,10 @@ export const handler: Handler = createHandled(async (event) => {
           try {
             let data: EventData = await (handler as any)(...args);
             console.debug('data', data)
+            console.debug('message', args[0].message)
 
             // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
-            if ('media_group_id' in (args[0].message ?? {})) {
+            if ('media_group_id' in (args[0].message ?? {}) && args[0].message?.media_group_id) {
               console.log('this is a media group')
 
               // We add the data to the groupMedia array
