@@ -44,10 +44,10 @@ export const handler: Handler = createHandled(async (event) => {
 
       // This will make the bot wait 1 second for multiple events to be triggered (sending a medias as a group)
       let groupActionTimeout = groupMedia.length > 0 ? setTimeout(async () => {
-
-        await sendMultipleMediaObj(groupMedia.map(media => media.data))
-
+          await sendMultipleMediaObj(groupMedia.map(media => media.data))
+        let list = [...groupMedia]
         groupMedia = []
+        list.forEach(media => media.resolve())          
       }, 8000) : undefined;
 
       // This will reject the promise and error if nothing triggers the event after 2 seconds
@@ -85,6 +85,7 @@ export const handler: Handler = createHandled(async (event) => {
             // The action was performed, so we won't timeout anymore
             clearTimeout(tooLongTimeout);
             clearTimeout(groupActionTimeout);
+            groupMedia = []
           }
         });
       }
@@ -113,6 +114,7 @@ export const handler: Handler = createHandled(async (event) => {
               }
             } else {
               clearTimeout(groupActionTimeout);
+              groupMedia = []
               let data: EventData = await (handler)(message);
               await sendMessageObj(data);
               resolve();
