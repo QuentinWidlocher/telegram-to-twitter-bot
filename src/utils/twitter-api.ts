@@ -44,7 +44,6 @@ export async function generateClient(
   accessToken: string,
   accessSecret: string
 ) {
-  console.log("generateClient()");
   return new TwitterApi({
     appKey: process.env.TWITTER_APP_KEY!,
     appSecret: process.env.TWITTER_APP_SECRET!,

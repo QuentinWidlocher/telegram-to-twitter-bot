@@ -24,7 +24,7 @@ export const getVideoEvent: OnEvent = (bot) => async (msg) => {
   let twitterClient = await getClientFromUserData(userData);
 
   let telegramMediaFile = await bot.getFile(msg.video.file_id);
-  console.debug("tgMediaFile", telegramMediaFile);
+
   let tgMediaBuffer = await {
     buffer: await streamToBuffer(bot.getFileStream(telegramMediaFile.file_id)),
     originalName: telegramMediaFile.file_path,

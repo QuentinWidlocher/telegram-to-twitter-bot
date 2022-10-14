@@ -25,7 +25,7 @@ If you want to know what commands this bot support, use /help.
 let groupMedia: { data: EventData, resolve: (value: void | PromiseLike<void>) => void, reject: (reason?: any) => void }[] = []
 
 export const handler: Handler = createHandled(async (event) => {
-  console.log("event", event);
+  // console.log("event", event);
 
   const bot = new TelegramBot(token);
 
@@ -101,24 +101,24 @@ export const handler: Handler = createHandled(async (event) => {
       for (const [event, handler] of Object.entries(getEvents(bot))) {
         bot.on(event as any, async (...args) => {
           console.log("on", event, args);
+          console.debug('message', args[0].message)
 
           // We triggered an event so, the action was found
           clearTimeout(actionNotFoundTimeout);
 
           try {
-            let data: EventData = await (handler as any)(...args);
-            console.debug('data', data)
-            console.debug('message', args[0].message)
-
             // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
             if ('media_group_id' in (args[0].message ?? {}) && args[0].message?.media_group_id) {
               console.log('this is a media group')
+              let data: EventData = await (handler as any)(...args);
+              console.debug('data', data)
 
               // We add the data to the groupMedia array
               groupMedia.push({ data, resolve, reject })
             } else {
-              await sendMessageObj(data);
               clearTimeout(groupActionTimeout);
+              let data: EventData = await (handler as any)(...args);
+              await sendMessageObj(data);
               resolve();
             }
 
