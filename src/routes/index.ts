@@ -99,25 +99,25 @@ export const handler: Handler = createHandled(async (event) => {
 
       // We iterate over the available events and set up the action
       for (const [event, handler] of Object.entries(getEvents(bot))) {
-        bot.on(event as any, async (...args) => {
-          console.log("on", event, args);
-          console.debug('message', args[0].message)
+        bot.on(event as any, async (query) => {
+          console.log("on", event, query);
+          console.debug('query', query)
 
           // We triggered an event so, the action was found
           clearTimeout(actionNotFoundTimeout);
 
           try {
             // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
-            if ('media_group_id' in (args[0].message ?? {}) && args[0].message?.media_group_id) {
+            if (query.message?.media_group_id) {
               console.log('this is a media group')
-              let data: EventData = await (handler as any)(...args);
+              let data: EventData = await (handler as any)(query);
               console.debug('data', data)
 
               // We add the data to the groupMedia array
               groupMedia.push({ data, resolve, reject })
             } else {
               clearTimeout(groupActionTimeout);
-              let data: EventData = await (handler as any)(...args);
+              let data: EventData = await (handler as any)(query);
               await sendMessageObj(data);
               resolve();
             }
