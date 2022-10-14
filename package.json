@@ -2,7 +2,7 @@
   "name": "telegram-to-twitter-bot",
   "version": "1.0.0",
   "description": "Telegram to Twitter bot",
-  "author": "",
+  "author": "Quentin Widlocher",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
     "@netlify/functions": "^1.0.0",

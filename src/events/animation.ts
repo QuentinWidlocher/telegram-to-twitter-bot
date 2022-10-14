@@ -1,4 +1,5 @@
 import { lookup } from "mime-types";
+import TelegramBot from "node-telegram-bot-api";
 import { Stream } from "stream";
 import invariant from "tiny-invariant";
 import { OnEvent } from "../events";
@@ -6,7 +7,7 @@ import { retreive } from "../utils/storage";
 import { sendMessage } from "../utils/telegram-api";
 import { getClientFromUserData, streamToBuffer } from "../utils/twitter-api";
 
-export const getAnimationEvent: OnEvent<"animation"> = (bot) => async (msg) => {
+export const getAnimationEvent: OnEvent = (bot) => async (msg) => {
   invariant(msg.animation, "msg.animation is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
@@ -33,18 +34,18 @@ export const getAnimationEvent: OnEvent<"animation"> = (bot) => async (msg) => {
     mimeType: lookup(tgMediaBuffer.originalName ?? "gif") || "image/gif",
   });
 
-  await sendMessage(
+  return {
     bot,
     message,
-    msg.from.id,
-    userData.channelId,
-    userData.twitterUsername,
+    msgFromId: msg.from.id,
+    channelId: userData.channelId,
+    twitterUsername: userData.twitterUsername,
     twitterClient,
     loadingMessage,
-    {
+    media: {
       buffer: tgMediaBuffer.buffer,
       mediaId,
       mediaType: "animation",
     }
-  );
+  };
 };

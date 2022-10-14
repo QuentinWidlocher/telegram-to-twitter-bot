@@ -5,6 +5,20 @@ import {
   TwitterApi,
 } from "twitter-api-v2";
 import { parseTweet } from "twitter-text";
+import { EventData } from "../events";
+
+export function sendMessageObj(data: EventData) {
+  return sendMessage(
+    data.bot,
+    data.message,
+    data.msgFromId,
+    data.channelId,
+    data.twitterUsername,
+    data.twitterClient,
+    data.loadingMessage,
+    data.media
+  )
+}
 
 export async function sendMessage(
   bot: TelegramBot,

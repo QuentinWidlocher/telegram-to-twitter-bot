@@ -2,8 +2,9 @@ import { Handler } from "@netlify/functions";
 import TelegramBot from "node-telegram-bot-api";
 import invariant from "tiny-invariant";
 import { getCommands } from "../commands";
-import { getEvents } from "../events";
+import { EventData, getEvents } from "../events";
 import { createHandled } from "../utils/error-handling";
+import { sendMessage, sendMessageObj } from "../utils/telegram-api";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
@@ -36,13 +37,21 @@ export const handler: Handler = createHandled(async (event) => {
     invariant(body.message, "body.message is required");
 
     await new Promise<void>((resolve, reject) => {
+
+      // This will make the bot wait 1 second for multiple events to be triggered (sending a medias as a group)
+      const groupActionTimeout = setTimeout(() => {
+        //todo : implement media group send
+      })
+
+      // This will reject the promise and error if nothing triggers the event after 2 seconds
       const actionNotFoundTimeout = setTimeout(() => {
         clearTimeout(tooLongTimeout);
         console.error("action not found");
         bot.sendMessage(body.message.chat.id, noActionMessage);
         reject("timeout");
-      }, 1000);
+      }, 2000);
 
+      // This will reject the promise and error if the action takes more than 9 seconds
       const tooLongTimeout = setTimeout(() => {
         console.log("too long");
         bot.sendMessage(body.message.chat.id, tooLongMessage, {
@@ -51,9 +60,12 @@ export const handler: Handler = createHandled(async (event) => {
         reject();
       }, 9000);
 
+      // We iterate over the available commands and set up the action
       for (const [pattern, handler] of getCommands(bot)) {
         bot.onText(pattern, async (...args) => {
           console.log("onText", pattern, args);
+
+          // We triggered an event so, the action was found
           clearTimeout(actionNotFoundTimeout);
 
           try {
@@ -63,29 +75,43 @@ export const handler: Handler = createHandled(async (event) => {
             console.error(error);
             reject(error);
           } finally {
+            // The action was performed, so we won't timeout anymore
             clearTimeout(tooLongTimeout);
           }
         });
       }
 
+      // We iterate over the available events and set up the action
       for (const [event, handler] of Object.entries(getEvents(bot))) {
         bot.on(event as any, async (...args) => {
           console.log("on", event, args);
+
+          // We triggered an event so, the action was found
           clearTimeout(actionNotFoundTimeout);
 
-          try {
-            await (handler as any)(...args);
-            clearTimeout(tooLongTimeout);
-            resolve();
-          } catch (error) {
-            console.error(error);
-            reject(error);
-          } finally {
-            clearTimeout(tooLongTimeout);
+          // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
+          if ('media_group_id' in (args[0].message ?? {})) {
+            console.log('this is a media group')
+            // todo: implement group send
+          } else {
+            try {
+              let data: EventData = await (handler as any)(...args);
+              console.debug('data', data)
+              await sendMessageObj(data);
+              resolve();
+            } catch (error) {
+              console.error(error);
+              reject(error);
+            } finally {
+              // The action was performed, so we won't timeout anymore
+              clearTimeout(tooLongTimeout);
+            } 
           }
+
         });
       }
 
+      // Now that we have set up the actions, we can trigger the event
       bot.processUpdate(body);
     });
 

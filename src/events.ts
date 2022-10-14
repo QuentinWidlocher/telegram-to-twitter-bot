@@ -1,10 +1,11 @@
 import TelegramBot from "node-telegram-bot-api";
+import { TwitterApi } from "twitter-api-v2";
 import { getAnimationEvent } from "./events/animation";
 import { getPhotoEvent } from "./events/photo";
 import { getVideoEvent } from "./events/video";
 
-export function getEvents(bot: TelegramBot) {
-  const events: Partial<TelegramBotOn> = {
+export function getEvents(bot: TelegramBot): Record<string, Event> {
+  const events = {
     photo: getPhotoEvent(bot),
     video: getVideoEvent(bot),
     animation: getAnimationEvent(bot),
@@ -41,8 +42,25 @@ export type TelegramBotOn = {
     | "edited_channel_post"
     | "edited_channel_post_text"
     | "edited_channel_post_caption"]: (message: TelegramBot.Message) => void;
-};
+  };
 
-export type OnEvent<T extends keyof TelegramBotOn> = (
+export type EventData = {
+  bot: TelegramBot,
+  message: string,
+  msgFromId: number,
+  channelId: string,
+  twitterUsername: string | undefined,
+  twitterClient: TwitterApi,
+  loadingMessage: TelegramBot.Message,
+  media: {
+    buffer: Buffer,
+    mediaId: string,
+    mediaType: 'photo' | 'video' | 'animation',
+  }
+}
+
+export type Event = (msg: TelegramBot.Message) => Promise<EventData>;
+
+export type OnEvent = (
   bot: TelegramBot
-) => TelegramBotOn[T];
+) => Event

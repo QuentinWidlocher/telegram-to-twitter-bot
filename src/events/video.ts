@@ -1,4 +1,5 @@
 import { lookup } from "mime-types";
+import TelegramBot from "node-telegram-bot-api";
 import { Stream } from "stream";
 import invariant from "tiny-invariant";
 import { OnEvent } from "../events";
@@ -6,7 +7,7 @@ import { retreive } from "../utils/storage";
 import { sendMessage } from "../utils/telegram-api";
 import { getClientFromUserData, streamToBuffer } from "../utils/twitter-api";
 
-export const getVideoEvent: OnEvent<"video"> = (bot) => async (msg) => {
+export const getVideoEvent: OnEvent = (bot) => async (msg) => {
   invariant(msg.video, "msg.video is required");
   invariant(msg.from?.id, "msg.from.id is required");
 
@@ -33,18 +34,18 @@ export const getVideoEvent: OnEvent<"video"> = (bot) => async (msg) => {
     mimeType: lookup(tgMediaBuffer.originalName ?? "mp4") || "video/mp4",
   });
 
-  await sendMessage(
+  return {
     bot,
     message,
-    msg.from.id,
-    userData.channelId,
-    userData.twitterUsername,
+    msgFromId: msg.from.id,
+    channelId: userData.channelId,
+    twitterUsername: userData.twitterUsername,
     twitterClient,
     loadingMessage,
-    {
+    media: {
       buffer: tgMediaBuffer.buffer,
       mediaId,
       mediaType: "video",
     }
-  );
+  };
 };
