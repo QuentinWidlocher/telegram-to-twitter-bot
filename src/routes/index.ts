@@ -99,25 +99,24 @@ export const handler: Handler = createHandled(async (event) => {
 
       // We iterate over the available events and set up the action
       for (const [event, handler] of Object.entries(getEvents(bot))) {
-        bot.on(event as any, async (query) => {
-          console.log("on", event, query);
-          console.debug('query', query)
+        bot.on((event as 'photo' | 'video' | 'animation'), async (message: TelegramBot.Message) => {
+          console.log("on", event, message);
 
           // We triggered an event so, the action was found
           clearTimeout(actionNotFoundTimeout);
 
           try {
             // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
-            if (query.message?.media_group_id) {
+            if (message?.media_group_id) {
               console.log('this is a media group')
-              let data: EventData = await (handler as any)(query);
+              let data: EventData = await (handler)(message);
               console.debug('data', data)
 
               // We add the data to the groupMedia array
               groupMedia.push({ data, resolve, reject })
             } else {
               clearTimeout(groupActionTimeout);
-              let data: EventData = await (handler as any)(query);
+              let data: EventData = await (handler)(message);
               await sendMessageObj(data);
               resolve();
             }
