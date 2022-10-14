@@ -110,7 +110,6 @@ export const handler: Handler = createHandled(async (event) => {
             if (message?.media_group_id) {
               console.log('this is a media group')
               let data: EventData = await (handler)(message);
-              console.debug('data', data)
 
               // We add the data to the groupMedia array
               groupMedia.push({ data, resolve, reject })

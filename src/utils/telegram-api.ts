@@ -20,7 +20,14 @@ export function sendMessageObj(data: EventData) {
   )
 }
 export function sendMultipleMediaObj(datas: EventData[]) {
-  console.log("sendMultipleMediaObj", datas);
+  console.log("sendMultipleMediaObj", datas[0].bot,
+    datas[0].message,
+    datas[0].msgFromId,
+    datas[0].channelId,
+    datas[0].twitterUsername,
+    datas[0].twitterClient,
+    datas[0].loadingMessage,
+    datas.map(data => data.media).filter(media => ['photo', 'video'].includes(media.mediaType)) as { buffer: Buffer, twitterMediaId: string, telegramMediaFile: TelegramBot.File, mediaType: 'photo' | 'video' }[]);
   return sendMultipleMedia(
     datas[0].bot,
     datas[0].message,
@@ -124,7 +131,6 @@ export async function sendMessage(
 
   try {
     if (media != null) {
-      console.log("media", media);
       const tgSend = (type: typeof media.mediaType) => {
         switch (type) {
           case "photo":
