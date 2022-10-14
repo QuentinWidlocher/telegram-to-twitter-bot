@@ -53,8 +53,9 @@ export type EventData = {
   twitterClient: TwitterApi,
   loadingMessage: TelegramBot.Message,
   media: {
+    telegramMediaFile: TelegramBot.File,
     buffer: Buffer,
-    mediaId: string,
+    twitterMediaId: string,
     mediaType: 'photo' | 'video' | 'animation',
   }
 }

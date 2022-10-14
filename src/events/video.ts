@@ -23,14 +23,14 @@ export const getVideoEvent: OnEvent = (bot) => async (msg) => {
 
   let twitterClient = await getClientFromUserData(userData);
 
-  let tgMediaFile = await bot.getFile(msg.video.file_id);
-  console.debug("tgMediaFile", tgMediaFile);
+  let telegramMediaFile = await bot.getFile(msg.video.file_id);
+  console.debug("tgMediaFile", telegramMediaFile);
   let tgMediaBuffer = await {
-    buffer: await streamToBuffer(bot.getFileStream(tgMediaFile.file_id)),
-    originalName: tgMediaFile.file_path,
+    buffer: await streamToBuffer(bot.getFileStream(telegramMediaFile.file_id)),
+    originalName: telegramMediaFile.file_path,
   };
 
-  const mediaId = await twitterClient.v1.uploadMedia(tgMediaBuffer.buffer, {
+  const twitterMediaId = await twitterClient.v1.uploadMedia(tgMediaBuffer.buffer, {
     mimeType: lookup(tgMediaBuffer.originalName ?? "mp4") || "video/mp4",
   });
 
@@ -43,8 +43,9 @@ export const getVideoEvent: OnEvent = (bot) => async (msg) => {
     twitterClient,
     loadingMessage,
     media: {
+      telegramMediaFile,
       buffer: tgMediaBuffer.buffer,
-      mediaId,
+      twitterMediaId,
       mediaType: "video",
     }
   };

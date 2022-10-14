@@ -4,7 +4,7 @@ import invariant from "tiny-invariant";
 import { getCommands } from "../commands";
 import { EventData, getEvents } from "../events";
 import { createHandled } from "../utils/error-handling";
-import { sendMessage, sendMessageObj } from "../utils/telegram-api";
+import { sendMessage, sendMessageObj, sendMultipleMedia, sendMultipleMediaObj } from "../utils/telegram-api";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
@@ -21,6 +21,8 @@ const noActionMessage = `
 
 If you want to know what commands this bot support, use /help.
 `;
+
+let groupMedia: { data: EventData, resolve: (value: void | PromiseLike<void>) => void, reject: (reason?: any) => void }[] = []
 
 export const handler: Handler = createHandled(async (event) => {
   console.log("event", event);
@@ -39,9 +41,22 @@ export const handler: Handler = createHandled(async (event) => {
     await new Promise<void>((resolve, reject) => {
 
       // This will make the bot wait 1 second for multiple events to be triggered (sending a medias as a group)
-      const groupActionTimeout = setTimeout(() => {
-        //todo : implement media group send
-      })
+      let groupActionTimeout = setTimeout(async () => {
+
+        try {
+          await sendMultipleMediaObj(groupMedia.map(media => media.data))
+
+          for (const mediaRequest of groupMedia) {
+            mediaRequest.resolve()
+          }
+        } catch {
+          for (const mediaRequest of groupMedia) {
+            mediaRequest.reject()
+          }
+        }
+
+        groupMedia = []
+      }, 1000)
 
       // This will reject the promise and error if nothing triggers the event after 2 seconds
       const actionNotFoundTimeout = setTimeout(() => {
@@ -77,6 +92,7 @@ export const handler: Handler = createHandled(async (event) => {
           } finally {
             // The action was performed, so we won't timeout anymore
             clearTimeout(tooLongTimeout);
+            clearTimeout(groupActionTimeout);
           }
         });
       }
@@ -89,25 +105,29 @@ export const handler: Handler = createHandled(async (event) => {
           // We triggered an event so, the action was found
           clearTimeout(actionNotFoundTimeout);
 
-          // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
-          if ('media_group_id' in (args[0].message ?? {})) {
-            console.log('this is a media group')
-            // todo: implement group send
-          } else {
-            try {
-              let data: EventData = await (handler as any)(...args);
-              console.debug('data', data)
-              await sendMessageObj(data);
-              resolve();
-            } catch (error) {
-              console.error(error);
-              reject(error);
-            } finally {
-              // The action was performed, so we won't timeout anymore
-              clearTimeout(tooLongTimeout);
-            } 
-          }
+          try {
+            let data: EventData = await (handler as any)(...args);
+            console.debug('data', data)
 
+            // If we have a 'media_group_id' id it means that we need to wait for the other events to be triggered
+            if ('media_group_id' in (args[0].message ?? {})) {
+              console.log('this is a media group')
+
+              // We add the data to the groupMedia array
+              groupMedia.push({ data, resolve, reject })
+            } else {
+              await sendMessageObj(data);
+              clearTimeout(groupActionTimeout);
+              resolve();
+            }
+
+          } catch (error) {
+            console.error(error);
+            reject(error);
+          } finally {
+            // The action was performed, so we won't timeout anymore
+            clearTimeout(tooLongTimeout);
+          }
         });
       }
 
