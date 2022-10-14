@@ -58,7 +58,7 @@ export const handler: Handler = createHandled(async (event) => {
         }
 
         groupMedia = []
-      }, 5000) : undefined;
+      }, 8000) : undefined;
 
       // This will reject the promise and error if nothing triggers the event after 2 seconds
       const actionNotFoundTimeout = setTimeout(() => {
