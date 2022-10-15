@@ -6,6 +6,7 @@ import { EventData, getEvents } from "../events";
 import { createHandled } from "../utils/error-handling";
 import { sendMessageObj, sendMultipleMediaObj } from "../utils/telegram-api";
 import tgLogger from "@quentin_widlocher/telegram-logger";
+import { Event } from "@netlify/functions/dist/function/event";
 
 tgLogger.init({
   botToken: process.env.TELEGRAM_BOT_TOKEN!,
@@ -32,7 +33,7 @@ If you want to know what commands this bot support, use /help.
 
 let groupMedia: { data: EventData, resolve: (value: void | PromiseLike<void>) => void, reject: (reason?: any) => void }[] = []
 
-export const handler: Handler = createHandled(async (event) => {
+export const handler = createHandled(async (event: Event) => {
   // console.log("event", event);
 
   const bot = new TelegramBot(token);
@@ -140,6 +141,4 @@ export const handler: Handler = createHandled(async (event) => {
     // Now that we have set up the actions, we can trigger the event
     bot.processUpdate(body);
   });
-
-  return { statusCode: 200, body: JSON.stringify(event) };
 });
