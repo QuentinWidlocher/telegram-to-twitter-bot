@@ -4,7 +4,15 @@ import invariant from "tiny-invariant";
 import { getCommands } from "../commands";
 import { EventData, getEvents } from "../events";
 import { createHandled } from "../utils/error-handling";
-import { sendMessage, sendMessageObj, sendMultipleMedia, sendMultipleMediaObj } from "../utils/telegram-api";
+import { sendMessageObj, sendMultipleMediaObj } from "../utils/telegram-api";
+import tgLogger from "@quentin_widlocher/telegram-logger";
+
+tgLogger.init({
+  botToken: process.env.TELEGRAM_BOT_TOKEN!,
+  chatId: process.env.TELEGRAM_LOG_CHANNEL_ID!,
+})
+
+tgLogger.replaceConsole();
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 

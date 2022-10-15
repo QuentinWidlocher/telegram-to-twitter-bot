@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@netlify/functions': ^1.0.0
+  '@quentin_widlocher/telegram-logger': ^1.1.0
   '@types/mime-types': ^2.1.1
   '@types/node': ^18.0.0
   '@types/node-telegram-bot-api': ^0.57.1
@@ -16,6 +17,7 @@ specifiers:
   typescript: ^4.7.4
 
 dependencies:
+  '@quentin_widlocher/telegram-logger': 1.1.0
   aws-sdk: 2.1174.0
   mime-types: 2.1.35
   node-fetch: 3.2.8
@@ -47,6 +49,12 @@ packages:
     dependencies:
       is-promise: 4.0.0
     dev: true
+
+  /@quentin_widlocher/telegram-logger/1.1.0:
+    resolution: {integrity: sha512-nrFMB9ZPlplKnVX3JRsOVSw4NIZOKslDh+YePljZYcQTYdUnUvPEsLwSA0XPoq1blLtEie94gNLTk4C5x68wTA==}
+    dependencies:
+      node-fetch: 3.2.10
+    dev: false
 
   /@types/caseless/0.12.2:
     resolution: {integrity: sha512-6ckxMjBBD8URvjB6J3NcnuAn5Pkl7t3TizAg+xdlzzQGSPSmBcXf8KoIH0ua/i+tio+ZRUHEXp0HEmvaR4kt0w==}
@@ -657,6 +665,15 @@ packages:
   /node-domexception/1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
+    dev: false
+
+  /node-fetch/3.2.10:
+    resolution: {integrity: sha512-MhuzNwdURnZ1Cp4XTazr69K0BTizsBroX7Zx3UgDSVcZYKF/6p0CBe4EUb/hLqmzVhl0UpYfgRljQ4yxE+iCxA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dependencies:
+      data-uri-to-buffer: 4.0.0
+      fetch-blob: 3.2.0
+      formdata-polyfill: 4.0.10
     dev: false
 
   /node-fetch/3.2.8:
