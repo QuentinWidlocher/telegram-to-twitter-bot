@@ -73,12 +73,24 @@ export const handler = createHandled((event: Event) => {
     console.log('this is a media group, we add', body.message.photo?.[body.message.photo.length - 1].file_id, 'to the group')
 
     return fromPromise(new Promise<void>((resolve, reject) => {
+
+      // This will reject the promise and error if the action takes more than 9 seconds
+      const tooLongTimeout = setTimeout(() => {
+        console.log("too long");
+        bot.sendMessage(body.message!.chat.id, tooLongMessage, {
+          disable_web_page_preview: true,
+        });
+        reject('too long');
+      }, 9000);
+
       // We iterate over the available events and set up the action
       for (const [event, handler] of Object.entries(getEvents(bot))) {
         bot.on((event as 'photo' | 'video' | 'animation'), async (message: TelegramBot.Message) => {
           console.log("on", event, message);
 
           let handlerResult = await handler(message);
+
+          clearTimeout(tooLongTimeout);
 
           if (handlerResult.isOk()) {
             groupMedia[body.message!.media_group_id!] = [...(groupMedia[body.message!.media_group_id!] ?? []), handlerResult.value]
