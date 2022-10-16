@@ -1,42 +1,63 @@
-import invariant from "tiny-invariant";
-import { parseTweet } from "twitter-text";
+import { err, errAsync, fromPromise, Result } from "neverthrow";
 import { Command } from "../commands";
 import { retreive } from "../utils/storage";
-import { sendMessage } from "../utils/telegram-api";
+import { sendMessage, sendMessageObj } from "../utils/telegram-api";
 import { getClientFromUserData } from "../utils/twitter-api";
 
 export const getNotCommand: Command = (bot) => async (msg) => {
   console.log("on message", msg);
-  invariant(msg.text, "msg.text is required");
-  invariant(msg.from?.id, "msg.from.id is required");
 
-  const loadingMessage = await bot.sendMessage(
+  if (!msg.text) {
+    return err("msg.text is required");
+  }
+
+  if (!msg.from?.id) {
+    return err("msg.from.id is required");
+  }
+
+  const loadingMessage = await fromPromise(bot.sendMessage(
     msg.from.id,
     `📤 Sending message...`
-  );
+  ), () => "Error sending message to Telegram");
+
+  if (loadingMessage.isErr()) {
+    return err(loadingMessage.error);
+  }
+
+  console.log("loading message", loadingMessage.value);
 
   let userData = await retreive(msg.from.id);
-  try {
-    invariant(userData.channelId, "userData.channelId is required");
-  } catch (e) {
-    await bot.editMessageText(
+
+  console.log("userData", userData);
+
+
+  if (userData.isErr() || !userData.value.channelId) {
+    let editRes = await fromPromise(bot.editMessageText(
       `❌ You need to link your Telegram channel first. Call the command \`/link\` <channel>`,
       {
         parse_mode: "Markdown",
+        chat_id: loadingMessage.value.chat.id,
+        message_id: loadingMessage.value.message_id,
       }
-    );
-    throw e;
+    ), (e) => "Error sending message to Telegram");
+
+    if (editRes.isErr()) {
+      return err(editRes.error);
+    }
+
+    return err("userData is required");
   }
 
-  let twitterClient = await getClientFromUserData(userData);
+  let twitterClient = getClientFromUserData(userData.value);
 
-  await sendMessage(
+  return Result.combine([twitterClient, userData, loadingMessage] as const).map(([twit, usr, loadingMsg]) => sendMessage(
     bot,
-    msg.text,
-    msg.from.id,
-    userData.channelId,
-    userData.twitterUsername,
-    twitterClient,
-    loadingMessage
-  );
+    msg.text!,
+    msg.from!.id,
+    usr.channelId!,
+    usr.twitterUsername,
+    twit,
+    loadingMsg
+  ))
 };
+

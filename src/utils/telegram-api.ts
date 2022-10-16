@@ -1,3 +1,4 @@
+import { err, fromPromise, Result, ResultAsync } from "neverthrow";
 import TelegramBot from "node-telegram-bot-api";
 import {
   ApiResponseError,
@@ -47,13 +48,13 @@ export async function sendMultipleMedia(
     mediaType: TelegramBot.InputMedia['type'],
   }[]) {
   if (text && !parseTweet(text).valid) {
-    await bot.sendMessage(currentChat, `❌ This message won't fit in a tweet.`);
+    await fromPromise(bot.sendMessage(currentChat, `❌ This message won't fit in a tweet.`),
+      () => 'Unable to send message'
+    );
 
-    return;
+    return err("This message won't fit in a tweet");
   }
 
-  let tgRes: TelegramBot.Message;
-  let twRes: TweetV2PostTweetResult;
   const tgChannelName = telegramChannel.replace("@", "");
 
   let mediaToSendToTg: TelegramBot.InputMedia[] = medias.map(media => ({
@@ -63,107 +64,20 @@ export async function sendMultipleMedia(
 
   mediaToSendToTg[mediaToSendToTg.length - 1].caption = text;
 
-  [tgRes, twRes] = await Promise.all([
-    bot.sendMediaGroup(`@${tgChannelName}`, mediaToSendToTg),
-    twitterClient.v2.tweet(text, {
+  let sendResults = Result.combine(await Promise.all([
+    fromPromise(bot.sendMediaGroup(`@${tgChannelName}`, mediaToSendToTg), () => 'Error sending message to Telegram'),
+    fromPromise(twitterClient.v2.tweet(text, {
       media: {
         media_ids: medias.map(media => media.twitterMediaId),
       },
-    }),
-  ]);
+    }), e => e as ApiResponseError),
+  ] as const));
 
-  const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
-  const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
+  return sendResults.map((([tg, tw]) => {
+    const twitterPostUrl = `https://twitter.com/${twitterName}/status/${tw.data.id}`;
+    const telegramPostUrl = `https://t.me/${tgChannelName}/${tg.message_id}`;
 
-  await bot.editMessageText("Message sent to Twitter and Telegram ! 🎉", {
-    message_id: loadingMessage.message_id,
-    chat_id: currentChat,
-    parse_mode: "Markdown",
-    disable_web_page_preview: true,
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "See Tweet",
-            url: twitterPostUrl,
-          },
-          {
-            text: "See post",
-            url: telegramPostUrl,
-          },
-        ],
-      ],
-    },
-  });
-}
-
-export async function sendMessage(
-  bot: TelegramBot,
-  text: string,
-  currentChat: string | number,
-  telegramChannel: string,
-  twitterName: string = telegramChannel,
-  twitterClient: TwitterApi,
-  loadingMessage: TelegramBot.Message,
-  media?: {
-    telegramMediaFile: TelegramBot.File;
-    buffer: Buffer,
-    twitterMediaId: string;
-    mediaType: 'photo' | 'video' | 'animation';
-  }
-) {
-  if (text && !parseTweet(text).valid) {
-    await bot.sendMessage(currentChat, `❌ This message won't fit in a tweet.`);
-
-    return;
-  }
-
-  let tgRes: TelegramBot.Message;
-  let twRes: TweetV2PostTweetResult;
-  const tgChannelName = telegramChannel.replace("@", "");
-
-  try {
-    if (media != null) {
-      const tgSend = (type: typeof media.mediaType) => {
-        switch (type) {
-          case "photo":
-            return bot.sendPhoto(`@${tgChannelName}`, media.buffer, {
-              caption: text,
-            });
-          case "animation":
-            return bot.sendAnimation(`@${tgChannelName}`, media.buffer, {
-              caption: text,
-            });
-          case "video":
-            return bot.sendVideo(`@${tgChannelName}`, media.buffer, {
-              caption: text,
-            });
-        }
-      };
-
-      [tgRes, twRes] = await Promise.all([
-        tgSend(media.mediaType),
-        twitterClient.v2.tweet(text, {
-          media: {
-            media_ids: [media.twitterMediaId],
-          },
-        }),
-      ]);
-    } else {
-      console.log("no media");
-      [tgRes, twRes] = await Promise.all([
-        bot.sendMessage(`@${tgChannelName}`, text),
-        twitterClient.v2.tweet(text),
-      ]);
-
-      console.log("tgRes", tgRes);
-      console.log("twRes", twRes);
-    }
-
-    const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
-    const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
-
-    await bot.editMessageText("Message sent to Twitter and Telegram ! 🎉", {
+    return fromPromise(bot.editMessageText("Message sent to Twitter and Telegram ! 🎉", {
       message_id: loadingMessage.message_id,
       chat_id: currentChat,
       parse_mode: "Markdown",
@@ -182,8 +96,97 @@ export async function sendMessage(
           ],
         ],
       },
-    });
-  } catch (error) {
+    }), () => 'Error sending message to Telegram');
+  })).asyncAndThen(it => it)
+}
+
+export async function sendMessage(
+  bot: TelegramBot,
+  text: string,
+  currentChat: string | number,
+  telegramChannel: string,
+  twitterName: string = telegramChannel,
+  twitterClient: TwitterApi,
+  loadingMessage: TelegramBot.Message,
+  media?: {
+    telegramMediaFile: TelegramBot.File;
+    buffer: Buffer,
+    twitterMediaId: string;
+    mediaType: 'photo' | 'video' | 'animation';
+  }
+) {
+  if (text && !parseTweet(text).valid) {
+    await fromPromise(bot.sendMessage(currentChat, `❌ This message won't fit in a tweet.`),
+      () => 'Unable to send message'
+    );
+
+    return err("This message won't fit in a tweet");
+  }
+
+  let sendResults: Result<[TelegramBot.Message, TweetV2PostTweetResult], string | ApiResponseError>
+  const tgChannelName = telegramChannel.replace("@", "");
+
+  if (media != null) {
+    const tgSend = (type: typeof media.mediaType) => {
+      switch (type) {
+        case "photo":
+          return fromPromise(bot.sendPhoto(`@${tgChannelName}`, media.buffer, {
+            caption: text,
+          }), () => 'Error sending photo to Telegram');
+        case "animation":
+          return fromPromise(bot.sendAnimation(`@${tgChannelName}`, media.buffer, {
+            caption: text,
+          }), () => 'Error sending animation');
+        case "video":
+          return fromPromise(bot.sendVideo(`@${tgChannelName}`, media.buffer, {
+            caption: text,
+          }), () => 'Error sending video');
+      }
+    };
+
+    sendResults = Result.combine(await Promise.all([
+      tgSend(media.mediaType),
+      fromPromise<TweetV2PostTweetResult, ApiResponseError>(twitterClient.v2.tweet(text, {
+        media: {
+          media_ids: [media.twitterMediaId],
+        },
+      }), e => e as ApiResponseError),
+    ] as const));
+  } else {
+    console.log("no media");
+    sendResults = Result.combine(await Promise.all([
+      fromPromise(bot.sendMessage(`@${tgChannelName}`, text), () => 'Error sending message to Telegram'),
+      fromPromise(twitterClient.v2.tweet(text), e => e as ApiResponseError),
+    ] as const));
+  }
+
+  return sendResults.asyncMap(async it => {
+    let [tgRes, twRes] = it
+
+    const twitterPostUrl = `https://twitter.com/${twitterName}/status/${twRes.data.id}`;
+    const telegramPostUrl = `https://t.me/${tgChannelName}/${tgRes.message_id}`;
+
+    return fromPromise(bot.editMessageText("Message sent to Twitter and Telegram ! 🎉", {
+      message_id: loadingMessage.message_id,
+      chat_id: currentChat,
+      parse_mode: "Markdown",
+      disable_web_page_preview: true,
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: "See Tweet",
+              url: twitterPostUrl,
+            },
+            {
+              text: "See post",
+              url: telegramPostUrl,
+            },
+          ],
+        ],
+      },
+    }), () => '')
+  }).mapErr(async error => {
     if (error instanceof ApiResponseError) {
       await bot.editMessageText(
         `❌ ${error.data.detail ??
@@ -198,7 +201,6 @@ export async function sendMessage(
         `❌ Something went wrong while posting. Check you configuration and try again.`,
         { message_id: loadingMessage.message_id, chat_id: currentChat }
       );
-      throw error;
     }
-  }
+  }).andThen(it => it)
 }

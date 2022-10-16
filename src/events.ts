@@ -1,3 +1,4 @@
+import { Result } from "neverthrow";
 import TelegramBot from "node-telegram-bot-api";
 import { TwitterApi } from "twitter-api-v2";
 import { getAnimationEvent } from "./events/animation";
@@ -27,10 +28,10 @@ export type EventData = {
     buffer: Buffer,
     twitterMediaId: string,
     mediaType: 'photo' | 'video' | 'animation',
-  }
+  },
 }
 
-export type Event = (msg: TelegramBot.Message) => Promise<EventData>;
+export type Event = (msg: TelegramBot.Message) => Promise<Result<EventData, string>>;
 
 export type OnEvent = (
   bot: TelegramBot

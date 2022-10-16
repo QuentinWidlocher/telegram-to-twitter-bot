@@ -3,3 +3,6 @@ node_modules
 dist
 aws
 .DS_Store
+
+# Local Netlify folder
+.netlify

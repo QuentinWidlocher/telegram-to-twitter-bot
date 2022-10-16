@@ -1,7 +1,8 @@
+import { fromPromise } from "neverthrow";
 import { Command } from "../commands";
 
-export const getHelpCommand: Command = (bot) => async (msg) => {
-  await bot.sendMessage(
+export const getHelpCommand: Command = (bot) => (msg) => {
+  return fromPromise(bot.sendMessage(
     msg.chat.id,
     `
 📝 Help
@@ -33,5 +34,5 @@ Show this help message.
       parse_mode: "Markdown",
       disable_web_page_preview: true,
     }
-  );
+  ), () => 'error sending help message')
 };

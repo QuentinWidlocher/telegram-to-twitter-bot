@@ -4,22 +4,30 @@
   "description": "Telegram to Twitter bot",
   "author": "Quentin Widlocher",
   "license": "GPL-3.0-or-later",
+  "scripts": {
+    "dev": "netlify functions:serve --functions ./src/routes --debug"
+  },
   "devDependencies": {
     "@netlify/functions": "^1.0.0",
     "@types/mime-types": "^2.1.1",
     "@types/node": "^18.0.0",
     "@types/node-telegram-bot-api": "^0.57.1",
     "@types/twitter-text": "^3.1.2",
+    "@typescript-eslint/parser": "^5.40.0",
+    "eslint": "^8.25.0",
+    "netlify-cli": "^12.0.9",
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "@quentin_widlocher/telegram-logger": "^1.2.0",
     "aws-sdk": "^2.1163.0",
+    "eslint-plugin-neverthrow": "^1.1.4",
     "mime-types": "^2.1.35",
+    "neverthrow": "^5.0.1",
     "node-fetch": "^3.2.8",
     "node-telegram-bot-api": "^0.58.0",
     "tiny-invariant": "^1.2.0",
     "twitter-api-v2": "^1.12.3",
-    "twitter-text": "^3.1.0",
-    "@quentin_widlocher/telegram-logger": "^1.2.0"
+    "twitter-text": "^3.1.0"
   }
 }

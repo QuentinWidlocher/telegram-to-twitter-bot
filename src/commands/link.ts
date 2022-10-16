@@ -1,3 +1,4 @@
+import { errAsync, fromPromise, Result } from "neverthrow";
 import invariant from "tiny-invariant";
 import { Command } from "../commands";
 import { retreive, store } from "../utils/storage";
@@ -19,33 +20,39 @@ Now, you can add this bot to your Telegram channel, and when you send posts here
 
 export const getLinkCommand: Command = (bot) => async (msg, match) => {
   console.log("/link <channel>", msg, match);
-  invariant(msg.from?.id, "msg.from.id is required");
+
+  if (!msg.from?.id) {
+    return errAsync("msg.from.id is required");
+  }
 
   const channelName = (match ?? [])[1];
   console.log("channelName", channelName);
 
   if (!channelName) {
-    await bot.sendMessage(msg.chat.id, channelNameMissing, {
+    await fromPromise(bot.sendMessage(msg.chat.id, channelNameMissing, {
       parse_mode: "Markdown",
-    });
-    return;
+    }), () => "Error sending message to Telegram");
+    return errAsync("channelName is required");
   }
 
   let userData = await retreive(msg.from.id);
 
-  if (!userData.credentials?.oauthVerifier) {
-    await bot.sendMessage(msg.chat.id, twitterAccountMissing, {
-      parse_mode: "Markdown",
-    });
-    return;
-  }
+  return userData.map(async it => {
+    if (!it.credentials?.oauthVerifier) {
+      await fromPromise(bot.sendMessage(msg.chat.id, twitterAccountMissing, {
+        parse_mode: "Markdown",
+      }), () => "Error sending message to Telegram");
+      return;
+    }
 
-  await store(msg.from.id, {
-    ...userData,
-    channelId: channelName,
-  });
-
-  await bot.sendMessage(msg.chat.id, successMessage, {
-    parse_mode: "Markdown",
-  });
+    return Result.combine([
+      await store(msg.from!.id, {
+        ...userData,
+        channelId: channelName,
+      }),
+      await fromPromise(bot.sendMessage(msg.chat.id, successMessage, {
+        parse_mode: "Markdown",
+      }), () => "Error sending message to Telegram"),
+    ])
+  })
 };

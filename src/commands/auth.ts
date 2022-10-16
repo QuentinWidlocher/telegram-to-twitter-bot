@@ -1,3 +1,4 @@
+import { errAsync, fromPromise, fromSafePromise, okAsync, Result } from "neverthrow";
 import invariant from "tiny-invariant";
 import { Command } from "../commands";
 import { update } from "../utils/storage";
@@ -9,28 +10,31 @@ Click the link below to authorize this bot to post on your Twitter account.
 
 export const getAuthCommand: Command = (bot) => async (msg) => {
   console.log("/auth", msg);
-  invariant(msg.from?.id, "msg.from.id is required");
+
+  if (!msg.from?.id) {
+    return errAsync("msg.from.id is required");
+  }
 
   let oauthResult = await startLogin({
     userId: msg.from.id,
     chatId: msg.chat.id,
   });
 
-  console.debug("oauthResult", oauthResult);
+  oauthResult.map(it => console.debug("oauthResult", it))
 
-  await update(msg.from.id, {
+  await oauthResult.map(it => update(msg.from!.id, {
     credentials: {
-      oauthToken: oauthResult.oauth_token,
-      oauthTokenSecret: oauthResult.oauth_token_secret,
+      oauthToken: it.oauth_token,
+      oauthTokenSecret: it.oauth_token_secret,
     },
-  });
+  }));
 
-  await await bot.sendMessage(msg.chat.id, welcomeMessage, {
+  return oauthResult.map(it => fromPromise(bot.sendMessage(msg.chat.id, welcomeMessage, {
     reply_markup: {
       inline_keyboard: [
-        [{ text: "Connect this bot to Twitter", url: oauthResult.url }],
+        [{ text: "Connect this bot to Twitter", url: it.url }],
       ],
     },
     parse_mode: "Markdown",
-  });
+  }), () => "Error sending message to Telegram"));
 };

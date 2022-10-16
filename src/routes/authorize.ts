@@ -4,6 +4,8 @@ import TelegramBot from "node-telegram-bot-api";
 import { Handler } from "@netlify/functions";
 import invariant from "tiny-invariant";
 import { createHandled } from "../utils/error-handling";
+import { err, fromPromise, ok } from "neverthrow";
+import { Event } from "@netlify/functions/dist/function/event";
 
 const token = process.env.TELEGRAM_BOT_TOKEN!;
 
@@ -12,74 +14,98 @@ const redirect = {
   headers: {
     Location: "tg://resolve?domain=TgToTwitterBot",
   },
-};
+} as const;
 
-export const handler: Handler = createHandled(async (event) => {
-  console.log("event", event);
-
+async function authorize(event: Event) {
   const bot = new TelegramBot(token);
 
-  try {
-    const oauthToken = event.queryStringParameters?.oauth_token;
-    const oauthVerifier = event.queryStringParameters?.oauth_verifier;
-    const userId = event.queryStringParameters?.userId;
-    const chatId = event.queryStringParameters?.chatId;
+  const oauthToken = event.queryStringParameters?.oauth_token;
+  const oauthVerifier = event.queryStringParameters?.oauth_verifier;
+  const userId = event.queryStringParameters?.userId;
+  const chatId = event.queryStringParameters?.chatId;
 
-    invariant(oauthToken, "oauthToken is required");
-    invariant(oauthVerifier, "oauthVerifier is required");
-    invariant(userId, "userId is required");
-    invariant(chatId, "chatId is required");
+  if (!oauthToken) {
+    return err("oauthToken is required");
+  }
 
-    let userData = await retreive(userId);
+  if (!oauthVerifier) {
+    return err("oauthVerifier is required");
+  }
 
-    try {
-      invariant(
-        userData.credentials?.oauthToken,
-        "userData.credentials.oauthToken is required"
-      );
-      invariant(
-        userData.credentials?.oauthTokenSecret,
-        "userData.credentials.oauthTokenSecret is required"
-      );
+  if (!userId) {
+    return err("userId is required");
+  }
 
-      let authentication = await generateOauthClient(
-        oauthToken,
-        userData.credentials?.oauthTokenSecret,
-        oauthVerifier
-      );
+  if (!chatId) {
+    return err("chatId is required");
+  }
 
-      await store(userId, {
-        ...userData,
-        credentials: {
-          ...userData.credentials,
-          accessToken: authentication.accessToken,
-          accessSecret: authentication.accessSecret,
-          oauthVerifier,
-        },
-        twitterUsername: authentication.screenName,
-      });
+  let userDataRes = await retreive(userId);
 
-      await bot.sendMessage(
-        chatId,
-        `
+  if (userDataRes.isErr()) {
+    return err("Unable to retreive user data");
+  }
+
+  let userData = userDataRes.value;
+
+  if (!userData.credentials?.oauthToken) {
+    return err("User has no oauthToken");
+  }
+
+  if (!userData.credentials?.oauthTokenSecret) {
+    return err("User has no oauthTokenSecret");
+  }
+
+  let authenticationRes = await generateOauthClient(
+    oauthToken,
+    userData.credentials.oauthTokenSecret,
+    oauthVerifier
+  );
+
+  let storeRes = await authenticationRes.asyncAndThen(authentication =>
+    store(userId, {
+      ...userDataRes,
+      credentials: {
+        ...userData.credentials,
+        accessToken: authentication.accessToken,
+        accessSecret: authentication.accessSecret,
+        oauthVerifier,
+      },
+      twitterUsername: authentication.screenName,
+    })
+  )
+
+  if (storeRes.isErr()) {
+    return err("Unable to store user data");
+  }
+
+  let responseRes = await fromPromise(bot.sendMessage(
+    chatId,
+    `
 ✅ You've just connected your Twitter account to this bot.
 Now, call the command \`/link @<channel-name>\` where \`@channel-name\` is the name of the Telegram channel you want to link.
       `,
-        { parse_mode: "Markdown" }
-      );
-    } catch (error) {
-      console.error("error", error);
-      await bot.sendMessage(
-        chatId,
-        `
-❌ An error occured while connecting your Twitter account to this bot.
-Please try again.
-      `
-      );
-    }
-  } catch (error) {
-    console.log("error", error);
-  } finally {
-    return redirect;
+    { parse_mode: "Markdown" }
+  ), () => "Error sending message to Telegram");
+
+  if (responseRes.isErr()) {
+    return err("Unable to send message to Telegram");
+  } else {
+    return ok(redirect);
   }
-});
+}
+
+export const handler: Handler = async (event) => {
+  console.log("event", event);
+
+  let result = await authorize(event)
+
+  if (result.isErr()) {
+    return {
+      statusCode: 500,
+      body: result.error,
+    }
+  } else {
+    return result.value;
+  }
+};
