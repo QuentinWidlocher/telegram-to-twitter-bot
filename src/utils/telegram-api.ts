@@ -21,6 +21,11 @@ export function sendMessageObj(data: EventData) {
   )
 }
 export function sendMultipleMediaObj(datas: EventData[]) {
+
+  if (datas.length <= 0) {
+    return err("No data to send");
+  }
+
   console.log("sendMultipleMediaObj", datas.map(data => data.media).filter(media => ['photo', 'video'].includes(media.mediaType)));
   return sendMultipleMedia(
     datas[0].bot,
